@@ -1,0 +1,56 @@
+{
+  "name": "greater-io",
+  "author": "SaberLS",
+  "private": true,
+  "description": "",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "build": "concurrently \"pnpm --filter shared build\" \"pnpm --filter server build\" \"pnpm --filter client build\"",
+    "build:client": "pnpm --filter client build",
+    "build:server": "pnpm --filter server build",
+    "build:shared": "pnpm --filter @projektinz/shared build",
+    "clean": "concurrently \"pnpm --filter server clean\" \"pnpm --filter client clean\" \"pnpm --filter shared clean\"",
+    "clean:all": "concurrently \"pnpm --filter server clean:all\" \"pnpm --filter client clean:all\" \"pnpm --filter shared clean:all\" && rm -rf node_modules",
+    "clean:client": "pnpm --filter client clean",
+    "clean:restart": "pnpm clean:all && pnpm --filter shared install && pnpm build:shared && pnpm install",
+    "clean:server": "pnpm --filter server clean",
+    "clean:shared": "pnpm --filter shared clean",
+    "dev": "concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev:client": "pnpm --filter client dev",
+    "dev:server": "pnpm --filter server dev",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "lint:check": "eslint \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
+    "lint:fix": "eslint --fix \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
+    "prepare": "husky",
+    "start:server": "pnpm --filter server start",
+    "test": "concurrently \"pnpm --filter server test\" \"pnpm --filter client test\"",
+    "test:client": "pnpm --filter client test",
+    "test:server": "pnpm --filter server test",
+    "test:watch": "concurrently \"pnpm --filter server test:watch\" \"pnpm --filter client test:watch\""
+  },
+  "lint-staged": {
+    "*.{ts,mts,cts,tsx,js,mjs,cjs,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,scss,md}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@greater-io/tools": "workspace:^",
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-packagejson": "^2.5.20",
+    "prettier-plugin-sort-json": "^4.1.1",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.24.0"
+}
