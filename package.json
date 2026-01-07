@@ -1,9 +1,9 @@
 {
   "name": "greater-io",
-  "author": "SaberLS",
   "private": true,
   "description": "",
   "license": "ISC",
+  "author": "SaberLS",
   "type": "module",
   "scripts": {
     "build": "concurrently \"pnpm --filter shared build\" \"pnpm --filter server build\" \"pnpm --filter client build\"",
@@ -52,5 +52,5 @@
     "rimraf": "^6.1.2",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.24.0"
+  "packageManager": "pnpm@10.27.0"
 }
