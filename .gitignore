@@ -1,6 +1,10 @@
+.env
+
+# ts build files
+*/tsconfig.tsbuildinfo
+
 # react-router build files
 */.react-router
-*/tsconfig.tsbuildinfo
 
 # Logs
 logs
