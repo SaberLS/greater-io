@@ -21,8 +21,8 @@ const config: Config = {
   transformIgnorePatterns: [],
   watchPathIgnorePatterns: ['<rootDir>/../../shared/dist'],
   moduleNameMapper: {
-    '^@projektinz/shared$': '<rootDir>/../../shared/src/index.ts',
-    '^@projektinz/shared/(.*)$': '<rootDir>/../../shared/src/$1',
+    '^@greater-io/shared$': '<rootDir>/../../shared/src/index.ts',
+    '^@greater-io/shared/(.*)$': '<rootDir>/../../shared/src/$1',
   },
 }
 
