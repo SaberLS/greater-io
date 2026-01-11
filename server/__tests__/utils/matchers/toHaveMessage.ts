@@ -1,0 +1,40 @@
+import type { MatcherFunction } from 'expect'
+import { isSupertestResponse } from '../isSupertestResponse'
+
+const toHaveMessage: MatcherFunction<[message: string]> = function (
+  actual: unknown,
+  expectedMessage: unknown
+) {
+  if (!isSupertestResponse(actual)) {
+    throw new TypeError('actual needs to be a supertest response')
+  }
+  if (!(typeof expectedMessage === 'string')) {
+    throw new TypeError('expectedStatus needs to be a number')
+  }
+
+  const pass = actual.body?.message === expectedMessage
+
+  const printExpected = this.utils.printExpected(expectedMessage)
+  const printReceived = this.utils.printReceived(actual.body?.message)
+
+  const hint =
+    pass ?
+      this.utils.matcherHint('.not.toHaveMessage')
+    : this.utils.matcherHint('.toHaveMessage')
+
+  const message =
+    pass ?
+      () =>
+        `${hint}\n\nExpected response.ok not to be ${printExpected}, got ${printReceived}`
+    : () =>
+        `${hint}\n\nExpected message to be ${printExpected}, got ${printReceived}`
+
+  return {
+    pass,
+    message,
+  }
+}
+
+expect.extend({
+  toHaveMessage,
+})
