@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": "../",
     "paths": {
-      "@server/*": ["src/*"]
+      "@server/*": ["./src/server/*"]
     },
     "types": ["node", "jest"]
   },
