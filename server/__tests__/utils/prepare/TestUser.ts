@@ -7,8 +7,8 @@ interface Credentials {
 }
 
 class TestUser {
-  readonly _agent: TestAgent
-  _token: string | undefined
+  private readonly _agent: TestAgent
+  private _token: string | undefined
   private _credentials: Credentials
 
   constructor(
