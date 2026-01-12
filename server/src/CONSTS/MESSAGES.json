@@ -13,5 +13,10 @@
     "validate": {
       "401": "Unauthorized"
     }
+  },
+  "public": {
+    "health": {
+      "200": "I'm alive"
+    }
   }
 }
