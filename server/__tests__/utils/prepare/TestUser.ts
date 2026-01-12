@@ -34,6 +34,10 @@ class TestUser {
     return this.agent.post('/auth/logout').set('Authorization', this.bearer)
   }
 
+  async health(): Promise<Response> {
+    return this.agent.get('/api/public/health')
+  }
+
   get bearer() {
     return `Bearer ${this.token}`
   }
