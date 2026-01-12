@@ -1,0 +1,17 @@
+{
+  "auth": {
+    "login": {
+      "401": "Wrong credentials",
+      "200": "Succesfully loged in"
+    },
+    "logout": {
+      "401": "Unauthorized",
+      "200": "Logged out successfully"
+    }
+  },
+  "protected": {
+    "validate": {
+      "401": "Unauthorized"
+    }
+  }
+}
