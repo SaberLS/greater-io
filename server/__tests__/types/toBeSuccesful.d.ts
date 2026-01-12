@@ -3,10 +3,10 @@ import 'expect'
 declare global {
   namespace jest {
     interface AsymmetricMatchers {
-      toBeSuccesfull(): void
+      toBeSuccessful(): void
     }
     interface Matchers<R> {
-      toBeSuccesfull(): R
+      toBeSuccessful(): R
     }
   }
 }

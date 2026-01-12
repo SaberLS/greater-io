@@ -1,7 +1,7 @@
 import type { MatcherFunction } from 'expect'
 import { isSupertestResponse } from '../isSupertestResponse'
 
-const toBeSuccessfull: MatcherFunction<[]> = function (actual: unknown) {
+const toBeSuccessful: MatcherFunction<[]> = function (actual: unknown) {
   if (!isSupertestResponse(actual)) {
     throw new TypeError('actual needs to be a supertest response')
   }
@@ -22,5 +22,5 @@ const toBeSuccessfull: MatcherFunction<[]> = function (actual: unknown) {
 }
 
 expect.extend({
-  toBeSuccessfull,
+  toBeSuccessful,
 })

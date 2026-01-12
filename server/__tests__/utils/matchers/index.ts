@@ -1,4 +1,4 @@
 export * from './toBeOk'
-export * from './toBeSuccessfull'
+export * from './toBeSuccessful'
 export * from './toHaveMessage'
 export * from './toHaveStatus'
