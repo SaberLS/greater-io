@@ -19,8 +19,8 @@ class TestUser {
     this._credentials = credentials
   }
 
-  login = (): Promise<Response> =>
-    this.agent
+  async login(): Promise<Response> {
+    return this.agent
       .post('/auth/login')
       .send(this.credentials)
       .then(res => {
@@ -28,11 +28,14 @@ class TestUser {
 
         return res
       })
+  }
 
-  logout = () => {
-    return this.agent
-      .post('/auth/logout')
-      .set('Authorization', `Bearer ${this.token}`)
+  async logout(): Promise<Response> {
+    return this.agent.post('/auth/logout').set('Authorization', this.bearer)
+  }
+
+  get bearer() {
+    return `Bearer ${this.token}`
   }
 
   set token(newToken: string | undefined) {
