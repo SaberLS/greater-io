@@ -13,8 +13,16 @@ const createApp = (options: CreateAppArgs) => {
   app.use(express.json())
 
   app.use('/auth', authRouter)
-  app.use('/api/public', publicRouter)
-  app.use('/api/protected', protectedRouter)
+  app.use('/public', publicRouter)
+  app.use('/protected', protectedRouter)
+
+  // Catch-all for unknown routes
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      message: 'Route not found',
+    })
+  })
 
   return app
 }
