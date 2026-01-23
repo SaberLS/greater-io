@@ -1,3 +1,4 @@
+import { type Socket, io as ioClient } from 'socket.io-client'
 import request, { type Response } from 'supertest'
 import type TestAgent from 'supertest/lib/agent'
 
@@ -8,13 +9,16 @@ interface Credentials {
 
 class TestUser {
   private readonly _agent: TestAgent
-  private _token: string | undefined
+  private _token?: string | undefined
   private _credentials: Credentials
+  private _socket?: Socket
+  private _url: string
 
   constructor(
     url: string,
     credentials = { username: 'alice', password: 'secret' }
   ) {
+    this._url = url
     this._agent = request.agent(url).set('Accept', 'application/json')
     this._credentials = credentials
   }
@@ -42,6 +46,41 @@ class TestUser {
     return this.agent.get('/api/public/health')
   }
 
+  connectProtectedSocket(): Promise<Socket> {
+    return new Promise((resolve, reject) => {
+      const socket = ioClient(`${this.url}/protected`, {
+        transports: ['websocket'],
+        auth: { token: this.token },
+      })
+
+      socket.once('connect', () => {
+        this._socket = socket
+        resolve(socket)
+      })
+
+      socket.once('connect_error', err => {
+        socket.close()
+        reject(err)
+      })
+    })
+  }
+
+  connectPublicSocket(): Promise<Socket> {
+    return new Promise((resolve, reject) => {
+      const socket = ioClient(`${this.url}/public`, {
+        transports: ['websocket'],
+      })
+
+      socket.once('connect', () => resolve(socket))
+      socket.once('connect_error', reject)
+    })
+  }
+
+  disconnectSocket() {
+    this._socket?.disconnect()
+    this._socket = undefined
+  }
+
   get bearer() {
     return `Bearer ${this.token}`
   }
@@ -56,6 +95,14 @@ class TestUser {
 
   get token() {
     return this._token
+  }
+
+  get url() {
+    return this._url
+  }
+
+  private set url(url: string) {
+    this._url = url
   }
 
   get credentials() {
