@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import type { Socket } from 'socket.io'
-import { JWT_SECRET } from '../CONSTS/DOTENV'
-import { userRepository } from '../repositories/UserRepository/userRepository'
+import { JWT_SECRET } from '../../CONSTS/DOTENV'
+import { userRepository } from '../../repositories/UserRepository/userRepository'
 
 interface JwtPayload {
   sub: number
