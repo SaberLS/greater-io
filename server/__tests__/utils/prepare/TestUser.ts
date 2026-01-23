@@ -34,6 +34,10 @@ class TestUser {
     return this.agent.post('/auth/logout').set('Authorization', this.bearer)
   }
 
+  async me(): Promise<Response> {
+    return this.agent.get('/protected/me').set('Authorization', this.bearer)
+  }
+
   async health(): Promise<Response> {
     return this.agent.get('/api/public/health')
   }
