@@ -1,4 +1,6 @@
 import dotenv from 'dotenv'
+import type { StringValue } from 'ms'
+import ms from 'ms'
 import DEFAULTS from './DEFAULT_ENV.json'
 import { DEFAULT_SECRET } from './DEFAULT_SECRET'
 
@@ -9,8 +11,13 @@ const readedPort = Number(process.env.PORT)
 const PORT = Number.isNaN(readedPort) ? Number(DEFAULTS.port) : readedPort
 const SECRET = process.env.SECRET ?? DEFAULT_SECRET
 const CLIENT = process.env.CLIENT ?? DEFAULTS.client
-const TOKEN_EXPIRE_TIME =
-  process.env.TOKEN_EXPIRE_TIME ?? DEFAULTS['token-expire-time']
+const TOKEN_EXPIRE_TIME = ms(
+  (process.env.TOKEN_EXPIRE_TIME as StringValue) ??
+    (DEFAULTS['token-expire-time'] as StringValue)
+)
+if (!TOKEN_EXPIRE_TIME) {
+  throw new Error(`Invalid TOKEN_EXPIRE_TIME: ${process.env.TOKEN_EXPIRE_TIME}`)
+}
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
 const JWT_SECRET = process.env.JWT_SECRET!

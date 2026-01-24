@@ -9,9 +9,7 @@ function signIn(user: IUser) {
       tokenVersion: user.tokenVersion,
     },
     JWT_SECRET,
-    // HACK: TOKEN_EXPIRE_TIME is not a number it's StringValue from jsonwebtoken package but type it's not exported and i can't type it correctly
-    { expiresIn: TOKEN_EXPIRE_TIME as unknown as number }
-  )
+    { expiresIn: TOKEN_EXPIRE_TIME }
 }
 
 export { signIn }
