@@ -1,8 +1,10 @@
-import type { IUser } from '../../models/User/User'
+import type { IUserDBO } from '../../models'
 
 interface IUserRepository {
-  getUserById(id: IUser['id']): Promise<IUser | undefined>
-  getUserByUsername(username: IUser['username']): Promise<IUser | undefined>
+  getUserById(id: IUserDBO['id']): Promise<IUserDBO | undefined>
+  getUserByUsername(
+    username: IUserDBO['username']
+  ): Promise<IUserDBO | undefined>
   incrementTokenVersion(id: number): number | undefined
 }
 

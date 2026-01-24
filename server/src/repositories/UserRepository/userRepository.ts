@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import type { IUser } from '../../models/User/User'
+import type { IUserDBO } from '../../models/User/IUserDBO'
 import { type IUserRepository } from './IUserRepository'
 
 /**
@@ -10,7 +10,7 @@ import { type IUserRepository } from './IUserRepository'
  */
 
 class UserRepository implements IUserRepository {
-  private store = new Map<number, IUser>()
+  private store = new Map<number, IUserDBO>()
 
   constructor() {
     this.seed()
@@ -32,13 +32,13 @@ class UserRepository implements IUserRepository {
     })
   }
 
-  async getUserById(id: IUser['id']): Promise<IUser | undefined> {
+  async getUserById(id: IUserDBO['id']): Promise<IUserDBO | undefined> {
     return this.store.get(id)
   }
 
   async getUserByUsername(
-    username: IUser['username']
-  ): Promise<IUser | undefined> {
+    username: IUserDBO['username']
+  ): Promise<IUserDBO | undefined> {
     for (const { 1: user } of this.store)
       if (user.username === username) return user
 
