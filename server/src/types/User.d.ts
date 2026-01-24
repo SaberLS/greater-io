@@ -1,5 +1,5 @@
 import 'express'
-import type { IUser } from '../models/User/User'
+import type { IUser } from '../models'
 
 declare module 'express' {
   interface User extends IUser {}
