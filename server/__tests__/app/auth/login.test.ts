@@ -7,10 +7,12 @@ const expectLogin = createExpectRes<[200, 401]>(MESSAGES.auth.login)
 describe('POST /auth/login', () => {
   const server = buildTestServer()
   let agent!: TestUser
+  let res: request.Response
 
   beforeAll(async () => {
     await server.init()
     agent = new TestUser(server.url)
+    res = await agent.login()
   })
 
   afterAll(async () => {
@@ -26,16 +28,22 @@ describe('POST /auth/login', () => {
     expectLogin(response).fail(401).and.haveMessage()
   })
 
-  it('should respond success with valid credentials', async () => {
-    const res = await agent.login()
-
+  it('should respond with success', async () => {
     expectLogin(res).success(200).and.haveMessage()
   })
 
-  it('should respond with valid access token', async () => {
-    const res = await agent.login()
+  it('should respond with valid auth data', async () => {
+    const { auth } = res.body.data
 
-    expect(res.body.token).toBeDefined()
-    expect(res.body.token.length).toBeGreaterThan(0)
+    expect(auth).toHaveProperty('token')
+    expect(auth).toHaveProperty('expiresIn')
+    expect(auth).toHaveProperty('expiresAt')
+  })
+
+  it('should not have any secret data', () => {
+    const { user } = res.body.data
+
+    expect(user).not.toHaveProperty('password')
+    expect(user).not.toHaveProperty('tokenVersion')
   })
 })
