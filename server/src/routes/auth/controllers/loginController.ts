@@ -1,19 +1,25 @@
 import { parseError, success } from '@greater-io/shared'
-import {
-  type NextFunction,
-  type Request,
-  type Response,
-  type User,
-} from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import passport from 'passport'
+import type { IApiResponse } from '../../../models/ApiResponse/IApiResponse'
+import type { IAuthData } from '../../../models/IAuthData'
+import type { IUser } from '../../../models/User/IUser'
+import type { IUserDBO } from '../../../models/User/IUserDBO'
 import { signIn } from '../service/signIn'
+
+interface LoginData {
+  user: IUser
+  auth: IAuthData
+}
+
+type LoginResponse = IApiResponse<LoginData>
 
 const loginController = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate(
     'local',
     async (
       error_: unknown,
-      user: User | undefined,
+      user: IUserDBO | undefined,
       info: { message: string }
     ) => {
       try {
@@ -25,15 +31,20 @@ const loginController = (req: Request, res: Response, next: NextFunction) => {
           })
         }
 
-        const token = signIn(user)
+        const auth: IAuthData = signIn(user)
         success('logged In', user.username)
 
         res.json({
           success: true,
-          user,
-          token,
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+            auth,
+          },
           message: info?.message,
-        })
+        } as LoginResponse)
       } catch (error_: unknown) {
         next(parseError(error_))
       }
