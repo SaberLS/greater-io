@@ -1,16 +1,9 @@
+import type { JwtPayload } from 'jsonwebtoken'
 import type { ExtendedError, Namespace, Socket } from 'socket.io'
-import type { IUser } from '../models/User/User'
-
-interface IoSocketUser extends Partial<IUser> {
-  socketId?: string
-}
+import type { ISocketUser } from '../models/User/ISocketUser'
 
 interface IoSocketData {
-  user?: IoSocketUser
-}
-
-interface JwtPayload {
-  sub: number
+  user?: ISocketUser
 }
 
 interface IoSocket extends Socket {
@@ -20,7 +13,7 @@ interface IoSocket extends Socket {
 
 interface IoAuthenticatedSocket extends IoSocket {
   data: {
-    user: IoSocketUser
+    user: ISocketUser
   }
   auth: JwtPayload
 }
@@ -42,4 +35,4 @@ interface IoAuthenticatedNamespace extends Namespace {
   ): this
 }
 
-export type { IoAuthenticatedNamespace, IoAuthenticatedSocket, JwtPayload }
+export type { IoAuthenticatedNamespace, IoAuthenticatedSocket }
