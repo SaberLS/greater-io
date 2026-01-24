@@ -1,9 +1,8 @@
-interface IUser {
+interface IUserDBO {
   id: number
   username: string
   password: string
   tokenVersion: number
-  socketId?: string
 }
 
-export { type IUser }
+export { type IUserDBO }
