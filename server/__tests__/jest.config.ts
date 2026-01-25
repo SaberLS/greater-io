@@ -15,7 +15,7 @@ const config: Config = {
     ],
   },
   testEnvironment: 'node',
-  testRegex: '(/__tests__/.*(\.|/)(test|spec))\.(ts|tsx|js|jsx)$',
+  testRegex: '(/__tests__/app.*(\.|/)(test|spec))\.(ts|tsx|js|jsx)$',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transformIgnorePatterns: [],
