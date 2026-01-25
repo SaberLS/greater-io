@@ -17,6 +17,8 @@ const buildTestServer = (
   let url: string | undefined
 
   const init = async () => {
+    if (bundle) throw new Error('Server already initialized')
+
     bundle = await main(config)
     url = getUrl(bundle.httpServer)
   }
