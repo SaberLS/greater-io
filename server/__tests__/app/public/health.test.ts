@@ -4,7 +4,7 @@ import { buildTestServer } from '../../utils/prepare/buildTestServer'
 
 const expectRes = createExpectRes(MESSAGES.public.health)
 
-describe('GET /api/public/health', () => {
+describe('GET public/health', () => {
   const server = buildTestServer()
   let user: TestUser
 

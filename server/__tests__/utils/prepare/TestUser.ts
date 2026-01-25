@@ -42,7 +42,7 @@ class TestUser {
   }
 
   async health(): Promise<Response> {
-    return this.agent.get('/api/public/health')
+    return this.agent.get('/public/health')
   }
 
   connectProtectedSocket(): Promise<Socket> {
