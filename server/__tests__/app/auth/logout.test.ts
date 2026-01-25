@@ -3,7 +3,7 @@ import { buildTestServer, createExpectRes, TestUser } from '../../utils'
 
 const expectLogout = createExpectRes<[200, 401]>(MESSAGES.auth.logout)
 
-describe('POST /auth/login', () => {
+describe('POST /auth/logout', () => {
   const server = buildTestServer()
   let agent: TestUser
 
