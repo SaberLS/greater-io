@@ -9,8 +9,9 @@ async function meController(req: Request, res: Response) {
       message: MESSAGES.protected.me[200],
     })
   } else {
-    res.status(401).json({
+    res.status(404).json({
       success: false,
+      message: MESSAGES.protected.me[404],
     })
   }
 }

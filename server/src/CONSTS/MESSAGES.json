@@ -14,7 +14,8 @@
       "401": "Unauthorized"
     },
     "me": {
-      "200": "User data retrieved succesfully"
+      "200": "User data retrieved succesfully",
+      "404": "User not found"
     }
   },
   "public": {
