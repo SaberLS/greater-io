@@ -28,7 +28,7 @@ describe('GET /protected/me', () => {
   })
 
   it('response should have user data', async () => {
-    expect(res.body.user).toHaveProperty('username')
-    expect(res.body.user).toHaveProperty('id')
+    expect(res.body.data.user).toHaveProperty('username')
+    expect(res.body.data.user).toHaveProperty('id')
   })
 })
