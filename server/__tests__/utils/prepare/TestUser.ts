@@ -1,16 +1,12 @@
 import { type Socket, io as ioClient } from 'socket.io-client'
 import request, { type Response } from 'supertest'
 import type TestAgent from 'supertest/lib/agent'
-
-interface Credentials {
-  username: string
-  password: string
-}
+import type { ICredentials } from '../../types/ICredentials'
 
 class TestUser {
   private readonly _agent: TestAgent
   private _token?: string | undefined
-  private _credentials: Credentials
+  private _credentials: ICredentials
   private _socket?: Socket
   private _url: string
 
@@ -112,7 +108,7 @@ class TestUser {
     return this._credentials
   }
 
-  private set credentials(newCredentials: Credentials) {
+  private set credentials(newCredentials: ICredentials) {
     this._credentials = newCredentials
   }
 }
