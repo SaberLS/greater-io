@@ -28,7 +28,10 @@ class TestUser {
       .post('/auth/login')
       .send(this.credentials)
       .then(res => {
-        if (res.status === 200) this.token = res.body.data.auth.token
+        const token = res.body?.data?.auth?.token
+        if (res.status === 200 && typeof token === 'string') {
+          this.token = token
+        }
 
         return res
       })
