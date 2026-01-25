@@ -11,9 +11,9 @@ const toBeSuccessful: MatcherFunction<[]> = function (actual: unknown) {
   const message =
     pass ?
       () =>
-        `${this.utils.matcherHint('.not.toBeSuccessful')} Expected response.body.success not to be true`
+        `${this.utils.matcherHint('.not.toBeSuccessful')} Expected response.body.success not to be true, received ${this.utils.printReceived(actual.body)} `
     : () =>
-        `${this.utils.matcherHint('.toBeSuccessful')} Expected response.body.success to be true, received ${this.utils.printReceived(actual.body?.success)}`
+        `${this.utils.matcherHint('.toBeSuccessful')} Expected response.body.success to be true, received ${this.utils.printReceived(actual.body)}`
 
   return {
     pass,

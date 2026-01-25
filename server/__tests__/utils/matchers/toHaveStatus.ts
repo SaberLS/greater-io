@@ -25,9 +25,9 @@ const toHaveStatus: MatcherFunction<[status: number]> = function (
   const message =
     pass ?
       () =>
-        `${hint}\n\nExpected response.ok not to be ${printExpected}, got ${printReceived}`
+        `${hint}\n\nExpected response.status not to be ${printExpected}, got ${printReceived}`
     : () =>
-        `${hint}\n\nExpected message to be ${printExpected}, got ${printReceived}`
+        `${hint}\n\nExpected response.status to be ${printExpected}, got ${printReceived}`
 
   return {
     pass,
