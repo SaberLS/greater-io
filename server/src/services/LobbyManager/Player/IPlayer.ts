@@ -5,10 +5,12 @@ interface IPlayerResult {
   time: number
 }
 
+type PlayerStatus = 'ready' | 'in-game' | 'not-ready'
+
 interface IPlayer extends ISocketUser {
   result: IPlayerResult
   socketId: string
-  status: 'ready' | 'in-game' | 'idle'
+  status: PlayerStatus
 }
 
 export type { IPlayer, IPlayerResult }
