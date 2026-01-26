@@ -1,13 +1,12 @@
 import jwt from 'jsonwebtoken'
-import type { Socket } from 'socket.io'
 import { JWT_SECRET } from '../../CONSTS/DOTENV'
 import { userRepository } from '../../repositories/UserRepository/userRepository'
+import type { IoSocketBeforeAuth } from '../../types/AuthSocket'
 
-interface JwtPayload {
-  sub: number
-}
-
-async function socketJwtAuth(socket: Socket, next: (err?: Error) => void) {
+async function socketJwtAuth(
+  socket: IoSocketBeforeAuth,
+  next: (err?: Error) => void
+) {
   const token = socket.handshake.auth?.token
   if (!token) return next(new Error('Unauthorized'))
 
@@ -21,7 +20,8 @@ async function socketJwtAuth(socket: Socket, next: (err?: Error) => void) {
     const user = await userRepository.getUserById(payload.sub)
     if (!user) return next(new Error('Unauthorized'))
 
-    socket.data.user = user
+    socket.data.user = { id: user.id, username: user.username }
+
     return next()
   } catch {
     return next(new Error('Unauthorized'))
