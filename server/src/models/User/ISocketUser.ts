@@ -1,7 +1,7 @@
 import type { IUser } from './IUser'
 
 interface ISocketUser extends IUser {
-  socketId?: string
+  socketId: string
 }
 
 export type { ISocketUser }
