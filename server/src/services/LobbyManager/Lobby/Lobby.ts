@@ -1,14 +1,17 @@
-import type { ISocketUser } from '../../../models'
+import type { ISocketUser, UserID } from '../../../models'
 import type { IPlayer } from '../Player/IPlayer'
-import type { ILobby, LobbyStatus } from './ILobby'
+import type { ILobby, ILobbyState, LobbyStatus } from './ILobby'
 
 type LobbyID = ReturnType<typeof crypto.randomUUID>
+type LobbyPlayer = Omit<IPlayer, 'socketId'>
+type LobbyState = ILobbyState<LobbyID, LobbyPlayer>
+type PlayerID = UserID
 
-class Lobby implements ILobby<LobbyID, number, IPlayer> {
+class Lobby implements ILobby<LobbyID, LobbyPlayer> {
   _id: LobbyID
-  _ownerId: number
+  _ownerId: PlayerID | undefined
   _status: LobbyStatus
-  readonly _players: Map<number, IPlayer>
+  readonly _players: Map<UserID, LobbyPlayer>
   _maxPlayers: number
 
   constructor(owner: ISocketUser, maxPlayers = 4) {
@@ -18,7 +21,6 @@ class Lobby implements ILobby<LobbyID, number, IPlayer> {
         {
           id: owner.id,
           status: 'not-ready',
-          socketId: owner.socketId,
           username: owner.username,
           result: { score: 0, time: 0 },
         },
@@ -61,13 +63,12 @@ class Lobby implements ILobby<LobbyID, number, IPlayer> {
     this.players.set(user.id, {
       id: user.id,
       status: 'not-ready',
-      socketId: user.socketId,
       username: user.username,
       result: { score: 0, time: 0 },
     })
   }
 
-  get state() {
+  get state(): LobbyState {
     return {
       id: this.id,
       ownerId: this.ownerId,
@@ -87,11 +88,11 @@ class Lobby implements ILobby<LobbyID, number, IPlayer> {
 
           return acc
         },
-        {} as Record<number, Omit<IPlayer, 'socketId'>>
+        {} as LobbyState['players']
       ),
-      currentPlayerCount: this.players.size, // optional convenience
+      currentPlayerCount: this.players.size,
     }
   }
 }
 
-export { Lobby, type LobbyID }
+export { Lobby, type LobbyID, type LobbyPlayer, type LobbyState, type PlayerID }
