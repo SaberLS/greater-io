@@ -56,6 +56,14 @@ class Lobby implements ILobby<LobbyID, LobbyPlayer> {
     return this.players.size >= this.maxPlayers
   }
 
+  leave(user: ISocketUser) {
+    if (!this.players.delete(user.id))
+      throw new Error(`User ${user.id} is not in this lobby`)
+
+    if (user.id === this.ownerId)
+      this._ownerId = this.players.values().next().value?.id
+  }
+
   add(user: ISocketUser) {
     if (this.isFull) throw new Error('Lobby is full')
     if (this.players.has(user.id)) throw new Error('Already in lobby')
