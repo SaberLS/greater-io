@@ -6,6 +6,7 @@ import type {
 } from '../../types/AuthSocket'
 
 import { parseError } from '@greater-io/shared'
+import type { ISocketUser } from '../../models'
 import { LobbyManager } from '../../services/LobbyManager/LobbyManager'
 import { socketJwtAuth } from './socketJWTAuth'
 
@@ -29,14 +30,15 @@ function registerProtectedNamespace(
   })
 
   protectedNs.on('connection', socket => {
-    const user = socket.data.user
+    const { user } = socket.data
 
     socket.on('ping', () => {
       socket.emit('secure-pong', 'secure-pong')
     })
 
     socket.on('lobby:create', () => {
-      if (socket.data.lobbyId) {
+      const { lobbyId } = socket.data
+      if (lobbyId) {
         socket.emit('error', 'Already in lobby')
         return
       }
@@ -81,12 +83,53 @@ function registerProtectedNamespace(
       }
     })
 
-    // socket.on('lobby:leave', () => {})
+    const leaveLobby = (
+      user: ISocketUser,
+      lobby: Lobby,
+      { silent = false }: { silent?: boolean } = {}
+    ) => {
+      try {
+        lobby.leave(user)
+
+        socket.leave(`lobby:${lobby.id}`)
+        socket.data.lobbyId = undefined
+
+        if (lobby.players.size === 0) {
+          lobbyManager.delete(lobby.id)
+
+          protectedNs.to(`lobby:${lobby.id}`).emit('lobby:closed')
+        } else
+          protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby.state)
+      } catch (_e: unknown) {
+        const error = parseError(_e)
+
+        if (!silent) socket.emit('lobby:error', error.message)
+      }
+    }
+
+    socket.on('lobby:leave', () => {
+      const { lobbyId } = socket.data
+
+      if (lobbyId) {
+        const lobby = lobbyManager.get(lobbyId)
+
+        if (lobby) {
+          leaveLobby(user, lobby)
+          protectedNs.to(`lobby:${lobbyId}`).emit('lobby:state', lobby.state)
+        } else socket.emit('lobby:error', `Lobby ${lobbyId} is not available`)
+      } else socket.emit('lobby:error', `User ${user.id} is not a lobby member`)
+    })
+
     // socket.on('lobby:ready', () => {})
     // socket.on('lobby:start', () => {})
 
     socket.on('disconnect', () => {
-      // cleanup later
+      const { lobbyId } = socket.data
+      if (lobbyId) {
+        const lobby = lobbyManager.get(lobbyId)
+
+        if (lobby) leaveLobby(user, lobby, { silent: true })
+      }
     })
   })
 
