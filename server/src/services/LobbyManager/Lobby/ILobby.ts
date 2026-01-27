@@ -14,4 +14,18 @@ interface ILobby<TLobbyID, TPlayer extends LobbyPlayer<UserID>> {
   maxPlayers: number
 }
 
-export type { ILobby, LobbyPlayer, LobbyStatus }
+interface ILobbyState<
+  TLobbyID,
+  TPlayer extends LobbyPlayer<UserID>,
+> extends Readonly<{
+  readonly id: TLobbyID
+  readonly ownerId: UserID | undefined
+  readonly status: LobbyStatus
+  readonly maxPlayers: number
+  readonly currentPlayerCount: number
+  readonly players: {
+    [key: UserID]: Readonly<TPlayer>
+  }
+}> {}
+
+export type { ILobby, ILobbyState, LobbyPlayer, LobbyStatus }
