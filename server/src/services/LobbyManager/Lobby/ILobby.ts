@@ -1,14 +1,16 @@
+import type { UserID } from '../../../models'
+
 type LobbyStatus = 'open' | 'full' | 'closed' | 'in-game'
 
 interface LobbyPlayer<TId> {
   id: TId
 }
 
-interface ILobby<TLobbyID, TPlayerID, TPlayer extends LobbyPlayer<TPlayerID>> {
+interface ILobby<TLobbyID, TPlayer extends LobbyPlayer<UserID>> {
   id: TLobbyID
-  ownerId: TPlayerID
+  ownerId: UserID | undefined
   status: LobbyStatus
-  players: Map<TPlayerID, TPlayer>
+  players: Map<UserID, TPlayer>
   maxPlayers: number
 }
 
