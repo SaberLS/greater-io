@@ -40,12 +40,12 @@ interface IoAuthenticatedUserSocket extends Socket<
   AuthenticatedEventsMap,
   {
     user: ISocketUser
-    lobbyId: LobbyID
+    lobbyId: LobbyID | undefined
   }
 > {
   data: {
     user: ISocketUser
-    lobbyId: LobbyID
+    lobbyId: LobbyID | undefined
   }
   handshake: Socket['handshake'] & {
     auth: JwtPayload
@@ -65,7 +65,7 @@ interface IoAuthenticatedNamespace extends Namespace<
   AuthenticatedEventsMap,
   {
     user: ISocketUser
-    lobbyId: LobbyID
+    lobbyId: LobbyID | undefined
   }
 > {
   sockets: Map<string, IoAuthenticatedUserSocket>
