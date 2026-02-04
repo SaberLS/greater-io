@@ -11,7 +11,6 @@ import type {
   LobbyPlayerResult,
   LobbyPlayerState,
   LobbyPlayerStatus,
-  LobbyPlayerT,
   LobbyState,
   LobbyStatus,
   LobbyStoreT,
@@ -45,7 +44,6 @@ function registerProtectedNamespace(
     LobbyPlayerStatus,
     LobbyPlayerState<LobbyUserID, LobbyUser>,
     LobbyPlayerResult,
-    LobbyPlayerT<LobbyUserID, LobbyUser>,
     LobbyT<LobbyUserID, LobbyUser>,
     LobbyStoreT<LobbyUserID, LobbyUser>
   >(Lobby, new LobbyStore())

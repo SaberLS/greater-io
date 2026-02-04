@@ -1,11 +1,6 @@
 import type { ILobbyManager } from './ILobbyManager'
 import type { ILobby, ILobbyState, ILobbyUserState } from './Lobby/ILobby'
-import type {
-  ILobbyPlayer,
-  ILobbyUser,
-  IPlayerResult,
-  IPlayerState,
-} from './LobbyPlayer'
+import type { ILobbyUser, IPlayerResult, IPlayerState } from './LobbyPlayer'
 import type { ILobbyStore } from './LobbyStore'
 
 class LobbyManager<
@@ -33,13 +28,6 @@ class LobbyManager<
     TLobbyPlayerStatus
   >,
   TLobbyPlayerResult extends IPlayerResult,
-  TLobbyPlayer extends ILobbyPlayer<
-    TUserID,
-    TLobbyUserState,
-    TLobbyPlayerStatus,
-    TLobbyPlayerState,
-    TLobbyPlayerResult
-  >,
   TLobby extends ILobby<
     TLobbyID,
     TUserID,
@@ -49,8 +37,7 @@ class LobbyManager<
     TLobbyState,
     TLobbyPlayerStatus,
     TLobbyPlayerState,
-    TLobbyPlayerResult,
-    TLobbyPlayer
+    TLobbyPlayerResult
   >,
   TLobbyStore extends ILobbyStore<
     TLobbyID,
@@ -62,7 +49,6 @@ class LobbyManager<
     TLobbyPlayerStatus,
     TLobbyPlayerState,
     TLobbyPlayerResult,
-    TLobbyPlayer,
     TLobby
   >,
 > implements ILobbyManager<TLobbyID, TUserID, TUser, TLobbyState> {
