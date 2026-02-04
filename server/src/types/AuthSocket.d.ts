@@ -6,7 +6,7 @@ import type {
   Socket,
 } from 'socket.io'
 import type { ISocketUser } from '../models/User/ISocketUser'
-import type { LobbyID } from '../services/LobbyManager/Lobby/Lobby'
+import type { LobbyID } from '../services/Lobby'
 
 type IoAuthenticatedUser = Omit<ISocketUser, 'socketId'> & { socketId?: string }
 

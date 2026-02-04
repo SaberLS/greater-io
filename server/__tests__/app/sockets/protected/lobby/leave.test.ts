@@ -1,6 +1,7 @@
 import type { Socket } from 'socket.io-client'
-import type { IUser } from '../../../../../src/models'
-import type { LobbyState } from '../../../../../src/services/LobbyManager/Lobby/Lobby'
+import type { IUser, UserID } from '../../../../../src/models'
+
+import type { LobbyState, LobbyUser } from '../../../../../src/services'
 import { buildTestServer, TestUsers } from '../../../../utils'
 
 describe('Protected Socket Namespace lobby:leave', () => {
@@ -12,8 +13,8 @@ describe('Protected Socket Namespace lobby:leave', () => {
   let patrykSocket: Socket
   let patrykData: IUser
 
-  let state: LobbyState
-  let lobbyId: LobbyState['id']
+  let state: LobbyState<UserID, IUser>
+  let lobbyId: LobbyState<UserID, IUser>['id']
 
   beforeAll(async () => {
     await server.init()
@@ -49,8 +50,10 @@ describe('Protected Socket Namespace lobby:leave', () => {
   })
 
   it('should remove user from the lobby', async () => {
-    const state: LobbyState = await new Promise(resolve => {
+    state = await new Promise(resolve => {
       aliceSocket.once('lobby:state', resolve)
+      aliceSocket.once('lobby:error', resolve)
+      aliceSocket.once('lobby:closed', resolve)
 
       patrykSocket.emit('lobby:leave')
     })
@@ -63,13 +66,12 @@ describe('Protected Socket Namespace lobby:leave', () => {
       currentPlayerCount: 1,
       players: {
         [aliceData.id]: {
-          id: aliceData.id,
-          username: aliceData.username,
+          user: { id: aliceData.id, username: aliceData.username },
           status: 'not-ready',
-          result: { score: 0, time: 0 },
+          result: { score: 0 },
         },
       },
-    })
+    } as LobbyState<UserID, LobbyUser>)
   })
 
   it('should transfer ownership after owner leaves', async () => {
@@ -78,7 +80,7 @@ describe('Protected Socket Namespace lobby:leave', () => {
       patrykSocket.emit('lobby:join', lobbyId)
     })
 
-    const state: LobbyState = await new Promise(resolve => {
+    const state: LobbyState<UserID, IUser> = await new Promise(resolve => {
       patrykSocket.once('lobby:state', resolve)
       aliceSocket.emit('lobby:leave')
     })
@@ -91,13 +93,12 @@ describe('Protected Socket Namespace lobby:leave', () => {
       currentPlayerCount: 1,
       players: {
         [patrykData.id]: {
-          id: patrykData.id,
-          username: patrykData.username,
+          user: { id: patrykData.id, username: patrykData.username },
           status: 'not-ready',
-          result: { score: 0, time: 0 },
+          result: { score: 0 },
         },
       },
-    })
+    } as LobbyState<UserID, LobbyUser>)
   })
 
   it('should respond with lobby:error when user is not a lobby member', async () => {
@@ -107,7 +108,7 @@ describe('Protected Socket Namespace lobby:leave', () => {
       aliceSocket.emit('lobby:leave', lobbyId)
     })
 
-    expect(error).toBe(`User ${aliceData.id} is not a lobby member`)
+    expect(error).toBe(`User is not a lobby member`)
   })
 
   it('should dissolve lobby after last player leaves', async () => {
@@ -120,6 +121,6 @@ describe('Protected Socket Namespace lobby:leave', () => {
       aliceSocket.emit('lobby:join', lobbyId)
     })
 
-    expect(error).toBe(`Lobby ${lobbyId} is not available`)
+    expect(error).toBe(`Lobby with id: ${lobbyId}, is not available`)
   })
 })

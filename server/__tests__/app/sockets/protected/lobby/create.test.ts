@@ -1,6 +1,6 @@
 import type { Socket } from 'socket.io-client'
-import type { IUser } from '../../../../../src/models'
-import type { LobbyState } from '../../../../../src/services/LobbyManager/Lobby/Lobby'
+import type { IUser, UserID } from '../../../../../src/models'
+import type { LobbyState, LobbyUser } from '../../../../../src/services'
 import { buildTestServer, TestUsers } from '../../../../utils'
 import { randomUUIDRegex } from '../../../../utils/matchers/randomUUIDRegex'
 
@@ -27,7 +27,7 @@ describe('Protected Socket Namespace lobby:create', () => {
 
   it('should create a lobby successfully', async () => {
     // Listen for the lobby state after creation
-    const state: LobbyState = await new Promise<any>(resolve => {
+    const state: LobbyState<UserID, IUser> = await new Promise<any>(resolve => {
       aliceSocket.once('lobby:state', resolve)
       aliceSocket.emit('lobby:create')
     })
@@ -41,13 +41,12 @@ describe('Protected Socket Namespace lobby:create', () => {
       currentPlayerCount: 1,
       players: {
         [aliceData.id]: {
-          id: aliceData.id,
-          username: aliceData.username,
+          user: { id: aliceData.id, username: aliceData.username },
           status: 'not-ready',
-          result: { score: 0, time: 0 },
+          result: { score: 0 },
         },
       },
-    })
+    } as LobbyState<UserID, LobbyUser>)
 
     aliceSocket.disconnect()
   })

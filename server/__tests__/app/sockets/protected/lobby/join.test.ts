@@ -1,5 +1,6 @@
 import type { Socket } from 'socket.io-client'
-import type { IUser } from '../../../../../src/models'
+import type { IUser, UserID } from '../../../../../src/models'
+import type { LobbyState, LobbyUser } from '../../../../../src/services'
 import { buildTestServer, TestUsers } from '../../../../utils'
 
 describe('Protected Socket Namespace lobby:create', () => {
@@ -50,7 +51,7 @@ describe('Protected Socket Namespace lobby:create', () => {
       }),
     ])
 
-    const expectedState = {
+    const expectedState: LobbyState<UserID, LobbyUser> = {
       id: lobby.id,
       ownerId: aliceData.id,
       status: 'open',
@@ -58,16 +59,14 @@ describe('Protected Socket Namespace lobby:create', () => {
       currentPlayerCount: 2,
       players: {
         [patrykData.id]: {
-          id: patrykData.id,
-          username: patrykData.username,
+          user: { id: patrykData.id, username: patrykData.username },
           status: 'not-ready',
-          result: { score: 0, time: 0 },
+          result: { score: 0 },
         },
         [aliceData.id]: {
-          id: aliceData.id,
-          username: aliceData.username,
+          user: { id: aliceData.id, username: aliceData.username },
           status: 'not-ready',
-          result: { score: 0, time: 0 },
+          result: { score: 0 },
         },
       },
     }
