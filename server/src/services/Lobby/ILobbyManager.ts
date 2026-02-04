@@ -5,11 +5,13 @@ interface ILobbyManager<
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
   TLobbyState,
+  TPlayerStatus,
 > {
   create(user: TUser): TLobbyState
   leave(user: TUser): TLobbyState
   join(user: TUser, lobbyId: TLobbyID): TLobbyState
   close(lobbyId: TLobbyID): TLobbyState
+  changeStatus(user: TUser, status: TPlayerStatus): TLobbyState
 }
 
 export type { ILobbyManager }

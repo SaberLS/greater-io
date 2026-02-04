@@ -46,6 +46,7 @@ interface ILobby<
   add(user: TUser): void
   hasUser(userId: TUserID): boolean
 
+  changeUserStatus(userId: TUserID, status: TPlayerStatus): void
   remove(user: TUser): void
   close(): void
 }

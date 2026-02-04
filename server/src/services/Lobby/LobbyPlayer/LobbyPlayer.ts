@@ -52,6 +52,12 @@ class LobbyPlayer<
     return this.#status
   }
 
+  set status(status: LobbyPlayerStatus) {
+    if (status === 'in-game' || status === 'ready' || status === 'not-ready')
+      this.#status = status
+    else throw new Error(`${status} is not valid player status`)
+  }
+
   get isReady() {
     return this.status === 'ready'
   }

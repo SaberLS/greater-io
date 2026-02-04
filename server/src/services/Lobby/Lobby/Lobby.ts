@@ -93,6 +93,12 @@ class Lobby<
     this.status = 'closed'
   }
 
+  changeUserStatus(userId: TUserID, status: LobbyPlayerStatus): void {
+    const player = this.players.get(userId)
+
+    if (player) player.status = status
+  }
+
   set status(state: LobbyStatus) {
     this.#status = state
   }

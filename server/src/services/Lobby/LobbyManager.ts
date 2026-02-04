@@ -2,7 +2,9 @@ import type { ILobbyManager } from './ILobbyManager'
 import type { ILobby, ILobbyState, ILobbyUserState } from './Lobby/ILobby'
 import type { ILobbyUser, IPlayerResult, IPlayerState } from './LobbyPlayer'
 import type { ILobbyStore } from './LobbyStore'
+import type { LobbyPlayerStatus } from './types'
 
+// TODO: All methods which take an user input unknown type and be casted to desired type by some Validator
 class LobbyManager<
   TLobbyID extends PropertyKey,
   TUserID extends PropertyKey,
@@ -14,18 +16,18 @@ class LobbyManager<
     TUser,
     TLobbyUserState,
     TLobbyPlayerResult,
-    TLobbyPlayerStatus,
+    LobbyPlayerStatus,
     TLobbyPlayerState,
     TLobbyStatus
   >,
   // ---
   TLobbyStatus,
-  TLobbyPlayerStatus,
+  // TLobbyPlayerStatus,
   TLobbyPlayerState extends IPlayerState<
     TUserID,
     TLobbyUserState,
     TLobbyPlayerResult,
-    TLobbyPlayerStatus
+    LobbyPlayerStatus
   >,
   TLobbyPlayerResult extends IPlayerResult,
   TLobby extends ILobby<
@@ -35,7 +37,7 @@ class LobbyManager<
     TLobbyUserState,
     TLobbyStatus,
     TLobbyState,
-    TLobbyPlayerStatus,
+    LobbyPlayerStatus,
     TLobbyPlayerState,
     TLobbyPlayerResult
   >,
@@ -46,12 +48,18 @@ class LobbyManager<
     TLobbyUserState,
     TLobbyStatus,
     TLobbyState,
-    TLobbyPlayerStatus,
+    LobbyPlayerStatus,
     TLobbyPlayerState,
     TLobbyPlayerResult,
     TLobby
   >,
-> implements ILobbyManager<TLobbyID, TUserID, TUser, TLobbyState> {
+> implements ILobbyManager<
+  TLobbyID,
+  TUserID,
+  TUser,
+  TLobbyState,
+  LobbyPlayerStatus
+> {
   private readonly Lobby: new (user: TUser) => TLobby
   private readonly store: TLobbyStore
 
@@ -110,6 +118,16 @@ class LobbyManager<
     lobby.close()
     this.store.deleteLobbyById(lobby.id)
 
+    return lobby.state
+  }
+
+  changeStatus(user: TUser, status: LobbyPlayerStatus): TLobbyState {
+    const lobby = this.store.getLobbyByUserId(user.id)
+
+    if (lobby === undefined || !lobby.hasUser(user.id))
+      throw new Error(`User is not a lobby member`)
+
+    lobby.changeUserStatus(user.id, status)
     return lobby.state
   }
 }

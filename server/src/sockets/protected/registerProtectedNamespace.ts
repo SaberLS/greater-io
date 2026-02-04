@@ -33,7 +33,8 @@ function registerProtectedNamespace(
     LobbyID,
     LobbyUserID,
     LobbyUser,
-    LobbyState<LobbyUserID, LobbyUser>
+    LobbyState<LobbyUserID, LobbyUser>,
+    LobbyPlayerStatus
   > = new LobbyManager<
     LobbyID,
     LobbyUserID,
@@ -41,7 +42,7 @@ function registerProtectedNamespace(
     LobbyUserState<LobbyUserID, LobbyUser>,
     LobbyState<LobbyUserID, LobbyUser>,
     LobbyStatus,
-    LobbyPlayerStatus,
+    // LobbyPlayerStatus,
     LobbyPlayerState<LobbyUserID, LobbyUser>,
     LobbyPlayerResult,
     LobbyT<LobbyUserID, LobbyUser>,
@@ -106,7 +107,18 @@ function registerProtectedNamespace(
       delete user.socketId
     })
 
-    // socket.on('lobby:ready', () => {})
+    socket.on('lobby:status', ({ status }: { status: LobbyPlayerStatus }) => {
+      try {
+        const lobby = lobbyManager.changeStatus(user, status)
+
+        protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby)
+      } catch (_e: unknown) {
+        const error = parseError(_e)
+
+        socket.emit('lobby:error', error.message)
+      }
+    })
+
     // socket.on('lobby:start', () => {})
 
     const leaveLobbySafely = (reason: 'leave' | 'disconnect') => {
