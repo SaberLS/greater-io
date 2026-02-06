@@ -11,6 +11,7 @@ interface ILobbyManager<
   leave(user: TUser): TLobbyState
   join(user: TUser, lobbyId: TLobbyID): TLobbyState
   close(lobbyId: TLobbyID): TLobbyState
+  start(user: TUser): TLobbyState
   changeStatus(user: TUser, status: TPlayerStatus): TLobbyState
 }
 

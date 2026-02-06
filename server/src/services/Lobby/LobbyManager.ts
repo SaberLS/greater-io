@@ -112,6 +112,7 @@ class LobbyManager<
     return this.closeLobby(lobby)
   }
 
+  // TODO: close shouldn't delete lobby it should only set lobby.status to closed to dissallow new users from joining, delete should be separate method
   private closeLobby(lobby: TLobby) {
     for (const userId of lobby.users) this.store.deleteUserById(userId)
 
@@ -128,6 +129,21 @@ class LobbyManager<
       throw new Error(`User is not a lobby member`)
 
     lobby.changeUserStatus(user.id, status)
+    return lobby.state
+  }
+
+  start(user: TUser): TLobbyState {
+    const lobby = this.store.getLobbyByUserId(user.id)
+
+    if (lobby === undefined)
+      throw new Error(`User with id: ${String(user.id)}, is not a lobby member`)
+    if (!lobby.isOwner(user))
+      throw new Error(
+        `User with id: ${String(user.id)}, is not an owner of lobby: ${String(lobby.id)}`
+      )
+    if (!lobby.isReady) throw new Error(`Not all lobby members are ready`)
+
+    lobby.start()
     return lobby.state
   }
 }

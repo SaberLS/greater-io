@@ -68,33 +68,70 @@ function registerProtectedNamespace(
       socket.emit('secure-pong', 'secure-pong')
     })
 
-    socket.on('lobby:create', () => {
+    const listenerHandler = <TArgs extends unknown[]>(
+      // TODO: add validation like validate: (...args: unknown[]) => TArgs,
+      listener: (...args: TArgs) => LobbyState<LobbyUserID, LobbyUser> | void,
+      options?: Partial<{
+        emitError: boolean
+        emitState: boolean
+      }>
+    ) => {
+      const opt = {
+        emitError: true,
+        emitState: true,
+        ...options,
+      }
+
+      return (...args: Partial<TArgs> | unknown[]) => {
+        try {
+          const lobby = listener(...args /* should be validate(...args) */)
+
+          if (opt.emitState && lobby)
+            protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby)
+        } catch (e) {
+          if (opt.emitError) socket.emit('lobby:error', parseError(e).message)
+        }
+      }
+    }
+
+    const leaveLobbySafely = (reason: 'leave' | 'disconnect') => {
       try {
+        const lobby = lobbyManager.leave(socket.data.user)
+        const lobbyRoom = `lobby:${lobby.id}`
+        socket.leave(lobbyRoom)
+
+        protectedNs.to(lobbyRoom).emit('lobby:state', lobby)
+      } catch (e) {
+        if (reason === 'leave')
+          socket.emit('lobby:error', parseError(e).message)
+      } finally {
+        socket.data.lobbyId = undefined
+      }
+    }
+
+    socket.on(
+      'lobby:create',
+      listenerHandler(() => {
         const lobby = lobbyManager.create(socket.data.user)
 
         socket.data.lobbyId = lobby.id
         socket.join(`lobby:${lobby.id}`)
 
-        protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby)
-      } catch (e) {
-        socket.emit('lobby:error', parseError(e).message)
-      }
-    })
+        return lobby
+      })
+    )
 
-    socket.on('lobby:join', lobbyId => {
-      try {
+    socket.on(
+      'lobby:join',
+      listenerHandler<[lobbyId: LobbyID]>(lobbyId => {
         const lobby = lobbyManager.join(user, lobbyId)
 
-        socket.join(`lobby:${lobbyId}`)
-        socket.data.lobbyId = lobbyId
+        socket.join(`lobby:${lobby.id}`)
+        socket.data.lobbyId = lobby.id
 
-        protectedNs.to(`lobby:${lobbyId}`).emit('lobby:state', lobby)
-      } catch (_e: unknown) {
-        const error = parseError(_e)
-
-        socket.emit('lobby:error', error.message)
-      }
-    })
+        return lobby
+      })
+    )
 
     socket.on('lobby:leave', () => {
       leaveLobbySafely('leave')
@@ -107,38 +144,17 @@ function registerProtectedNamespace(
       delete user.socketId
     })
 
-    socket.on('lobby:status', ({ status }: { status: LobbyPlayerStatus }) => {
-      try {
-        const lobby = lobbyManager.changeStatus(user, status)
+    socket.on(
+      'lobby:status',
+      listenerHandler<[status: LobbyPlayerStatus]>(
+        (status: LobbyPlayerStatus) => lobbyManager.changeStatus(user, status)
+      )
+    )
 
-        protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby)
-      } catch (_e: unknown) {
-        const error = parseError(_e)
-
-        socket.emit('lobby:error', error.message)
-      }
-    })
-
-    // socket.on('lobby:start', () => {})
-
-    const leaveLobbySafely = (reason: 'leave' | 'disconnect') => {
-      try {
-        const lobby = lobbyManager.leave(socket.data.user)
-
-        // console.log(user)
-
-        const lobbyRoom = `lobby:${lobby.id}`
-
-        socket.leave(lobbyRoom)
-
-        protectedNs.to(lobbyRoom).emit('lobby:state', lobby)
-      } catch (e) {
-        if (reason === 'leave')
-          socket.emit('lobby:error', parseError(e).message)
-      } finally {
-        socket.data.lobbyId = undefined
-      }
-    }
+    socket.on(
+      'lobby:start',
+      listenerHandler(() => lobbyManager.start(user))
+    )
   })
 
   return protectedNs as IoAuthenticatedNamespace

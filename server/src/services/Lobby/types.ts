@@ -41,7 +41,13 @@ type LobbyPlayerT<
   LobbyPlayerResult
 >
 
-type LobbyStatus = 'open' | 'closed' | 'game-in-progress'
+type LobbyStatus =
+  | 'open'
+  | 'closed'
+  | 'game-in-progress'
+  | 'starting'
+  | 'finished'
+
 type LobbyState<
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
