@@ -5,11 +5,7 @@ import type {
   LobbyUser,
   LobbyUserID,
 } from '../../../../../src/services'
-import { buildTestServer, TestUsers } from '../../../../utils'
-
-function once<T = any>(socket: Socket, event: string): Promise<T> {
-  return new Promise(resolve => socket.once(event, resolve))
-}
+import { buildTestServer, once, TestUsers } from '../../../../utils'
 
 describe('Protected Socket Namespace lobby:status', () => {
   const server = buildTestServer()
