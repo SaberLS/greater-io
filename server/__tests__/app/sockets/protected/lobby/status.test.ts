@@ -57,7 +57,7 @@ describe('Protected Socket Namespace lobby:status', () => {
     await once<LobbyState<LobbyUserID, LobbyUser>>(aliceSocket, 'lobby:state')
 
     // Patryk changes status
-    patrykSocket.emit('lobby:status', { status: 'ready' })
+    patrykSocket.emit('lobby:status', 'ready')
 
     const updatedState = await once<LobbyState<LobbyUserID, LobbyUser>>(
       aliceSocket,
@@ -67,14 +67,14 @@ describe('Protected Socket Namespace lobby:status', () => {
   })
 
   it('rejects invalid player status', async () => {
-    aliceSocket.emit('lobby:status', { status: 'INVALID_STATUS' })
+    aliceSocket.emit('lobby:status', 'INVALID_STATUS')
 
     const error = await once(aliceSocket, 'lobby:error')
     expect(error).toMatch(/not valid player status/i)
   })
 
   it('broadcasts updated state to all lobby members', async () => {
-    patrykSocket.emit('lobby:status', { status: 'not-ready' })
+    patrykSocket.emit('lobby:status', 'not-ready')
 
     const [aliceState, patrykState] = await Promise.all([
       once(aliceSocket, 'lobby:state'),
