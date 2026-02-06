@@ -1,4 +1,4 @@
-import type { ILobbyUser } from './LobbyPlayer'
+import type { ILobbyUser } from './LobbyMember'
 
 interface ILobbyManager<
   TLobbyID extends PropertyKey,

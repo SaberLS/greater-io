@@ -55,18 +55,16 @@ describe('Protected Socket Namespace lobby:create', () => {
       id: lobby.id,
       ownerId: aliceData.id,
       status: 'open',
-      maxPlayers: 4,
-      currentPlayerCount: 2,
-      players: {
+      maxMembers: 4,
+      currentMemberCount: 2,
+      members: {
         [patrykData.id]: {
           user: { id: patrykData.id, username: patrykData.username },
           status: 'not-ready',
-          result: { score: 0 },
         },
         [aliceData.id]: {
           user: { id: aliceData.id, username: aliceData.username },
           status: 'not-ready',
-          result: { score: 0 },
         },
       },
     }

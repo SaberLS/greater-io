@@ -1,5 +1,5 @@
 import type { ILobby, ILobbyState, ILobbyUserState } from '../Lobby/ILobby'
-import type { ILobbyUser, IPlayerResult, IPlayerState } from '../LobbyPlayer'
+import type { ILobbyMemberState, ILobbyUser } from '../LobbyMember'
 
 interface ILobbyStore<
   TLobbyID extends PropertyKey,
@@ -12,20 +12,17 @@ interface ILobbyStore<
     TUserID,
     TUser,
     TLobbyUserState,
-    TLobbyPlayerResult,
-    TLobbyPlayerStatus,
-    TLobbyPlayerState,
+    TLobbyMemberStatus,
+    TLobbyMemberState,
     TLobbyStatus
   >,
   // ---
-  TLobbyPlayerStatus,
-  TLobbyPlayerState extends IPlayerState<
+  TLobbyMemberStatus,
+  TLobbyMemberState extends ILobbyMemberState<
     TUserID,
     TLobbyUserState,
-    TLobbyPlayerResult,
-    TLobbyPlayerStatus
+    TLobbyMemberStatus
   >,
-  TLobbyPlayerResult extends IPlayerResult,
   TLobby extends ILobby<
     TLobbyID,
     TUserID,
@@ -33,9 +30,8 @@ interface ILobbyStore<
     TLobbyUserState,
     TLobbyStatus,
     TLobbyState,
-    TLobbyPlayerStatus,
-    TLobbyPlayerState,
-    TLobbyPlayerResult
+    TLobbyMemberStatus,
+    TLobbyMemberState
   >,
 > {
   deleteUserById(userId: TUserID): void

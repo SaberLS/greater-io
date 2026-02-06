@@ -62,13 +62,12 @@ describe('Protected Socket Namespace lobby:leave', () => {
       id: lobbyId,
       ownerId: aliceData.id,
       status: 'open',
-      maxPlayers: 4,
-      currentPlayerCount: 1,
-      players: {
+      maxMembers: 4,
+      currentMemberCount: 1,
+      members: {
         [aliceData.id]: {
           user: { id: aliceData.id, username: aliceData.username },
           status: 'not-ready',
-          result: { score: 0 },
         },
       },
     } as LobbyState<UserID, LobbyUser>)
@@ -89,13 +88,12 @@ describe('Protected Socket Namespace lobby:leave', () => {
       id: lobbyId,
       ownerId: patrykData.id,
       status: 'open',
-      maxPlayers: 4,
-      currentPlayerCount: 1,
-      players: {
+      maxMembers: 4,
+      currentMemberCount: 1,
+      members: {
         [patrykData.id]: {
           user: { id: patrykData.id, username: patrykData.username },
           status: 'not-ready',
-          result: { score: 0 },
         },
       },
     } as LobbyState<UserID, LobbyUser>)
@@ -111,8 +109,8 @@ describe('Protected Socket Namespace lobby:leave', () => {
     expect(error).toBe(`User is not a lobby member`)
   })
 
-  it('should dissolve lobby after last player leaves', async () => {
-    // Last player leaves, lobby is destroyed
+  it('should dissolve lobby after last member leaves', async () => {
+    // Last member leaves, lobby is destroyed
     patrykSocket.emit('lobby:leave')
 
     // Another user tries to join, gets lobby:error

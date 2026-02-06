@@ -1,8 +1,8 @@
 import type { ILobbyManager } from './ILobbyManager'
 import type { ILobby, ILobbyState, ILobbyUserState } from './Lobby/ILobby'
-import type { ILobbyUser, IPlayerResult, IPlayerState } from './LobbyPlayer'
+import type { ILobbyMemberState, ILobbyUser } from './LobbyMember'
 import type { ILobbyStore } from './LobbyStore'
-import type { LobbyPlayerStatus } from './types'
+import type { LobbyMemberStatus } from './types'
 
 // TODO: All methods which take an user input unknown type and be casted to desired type by some Validator
 class LobbyManager<
@@ -15,21 +15,18 @@ class LobbyManager<
     TUserID,
     TUser,
     TLobbyUserState,
-    TLobbyPlayerResult,
-    LobbyPlayerStatus,
-    TLobbyPlayerState,
+    LobbyMemberStatus,
+    TLobbyMemberState,
     TLobbyStatus
   >,
   // ---
   TLobbyStatus,
-  // TLobbyPlayerStatus,
-  TLobbyPlayerState extends IPlayerState<
+  // TLobbyMemberStatus,
+  TLobbyMemberState extends ILobbyMemberState<
     TUserID,
     TLobbyUserState,
-    TLobbyPlayerResult,
-    LobbyPlayerStatus
+    LobbyMemberStatus
   >,
-  TLobbyPlayerResult extends IPlayerResult,
   TLobby extends ILobby<
     TLobbyID,
     TUserID,
@@ -37,9 +34,8 @@ class LobbyManager<
     TLobbyUserState,
     TLobbyStatus,
     TLobbyState,
-    LobbyPlayerStatus,
-    TLobbyPlayerState,
-    TLobbyPlayerResult
+    LobbyMemberStatus,
+    TLobbyMemberState
   >,
   TLobbyStore extends ILobbyStore<
     TLobbyID,
@@ -48,9 +44,8 @@ class LobbyManager<
     TLobbyUserState,
     TLobbyStatus,
     TLobbyState,
-    LobbyPlayerStatus,
-    TLobbyPlayerState,
-    TLobbyPlayerResult,
+    LobbyMemberStatus,
+    TLobbyMemberState,
     TLobby
   >,
 > implements ILobbyManager<
@@ -58,7 +53,7 @@ class LobbyManager<
   TUserID,
   TUser,
   TLobbyState,
-  LobbyPlayerStatus
+  LobbyMemberStatus
 > {
   private readonly Lobby: new (user: TUser) => TLobby
   private readonly store: TLobbyStore
@@ -122,7 +117,7 @@ class LobbyManager<
     return lobby.state
   }
 
-  changeStatus(user: TUser, status: LobbyPlayerStatus): TLobbyState {
+  changeStatus(user: TUser, status: LobbyMemberStatus): TLobbyState {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (lobby === undefined || !lobby.hasUser(user.id))

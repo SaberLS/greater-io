@@ -1,5 +1,5 @@
 import type { ILobby, ILobbyState, ILobbyUserState } from '../Lobby'
-import type { ILobbyUser, IPlayerResult, IPlayerState } from '../LobbyPlayer'
+import type { ILobbyMemberState, ILobbyUser } from '../LobbyMember'
 import type { ILobbyStore } from './ILobbyStore'
 
 class LobbyStore<
@@ -12,21 +12,18 @@ class LobbyStore<
     TUserID,
     TUser,
     TLobbyUserState,
-    TLobbyPlayerResult,
-    TLobbyPlayerStatus,
-    TLobbyPlayerState,
+    TLobbyMemberStatus,
+    TLobbyMemberState,
     TLobbyStatus
   >,
   // ---
   TLobbyStatus,
-  TLobbyPlayerStatus,
-  TLobbyPlayerState extends IPlayerState<
+  TLobbyMemberStatus,
+  TLobbyMemberState extends ILobbyMemberState<
     TUserID,
     TLobbyUserState,
-    TLobbyPlayerResult,
-    TLobbyPlayerStatus
+    TLobbyMemberStatus
   >,
-  TLobbyPlayerResult extends IPlayerResult,
   TLobby extends ILobby<
     TLobbyID,
     TUserID,
@@ -34,9 +31,8 @@ class LobbyStore<
     TLobbyUserState,
     TLobbyStatus,
     TLobbyState,
-    TLobbyPlayerStatus,
-    TLobbyPlayerState,
-    TLobbyPlayerResult
+    TLobbyMemberStatus,
+    TLobbyMemberState
   >,
 > implements ILobbyStore<
   TLobbyID,
@@ -45,9 +41,8 @@ class LobbyStore<
   TLobbyUserState,
   TLobbyStatus,
   TLobbyState,
-  TLobbyPlayerStatus,
-  TLobbyPlayerState,
-  TLobbyPlayerResult,
+  TLobbyMemberStatus,
+  TLobbyMemberState,
   TLobby
 > {
   readonly #userToLobby = new Map<TUserID, TLobby>()

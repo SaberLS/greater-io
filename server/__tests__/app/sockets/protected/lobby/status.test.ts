@@ -44,7 +44,7 @@ describe('Protected Socket Namespace lobby:status', () => {
     patrykSocket.disconnect()
   })
 
-  it('updates player status and emits lobby state', async () => {
+  it('updates member status and emits lobby state', async () => {
     // Alice creates lobby
     aliceSocket.emit('lobby:create')
     const lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
@@ -63,14 +63,14 @@ describe('Protected Socket Namespace lobby:status', () => {
       aliceSocket,
       'lobby:state'
     )
-    expect(updatedState.players[patrykData.id].status).toBe('ready')
+    expect(updatedState.members[patrykData.id].status).toBe('ready')
   })
 
-  it('rejects invalid player status', async () => {
+  it('rejects invalid member status', async () => {
     aliceSocket.emit('lobby:status', 'INVALID_STATUS')
 
     const error = await once(aliceSocket, 'lobby:error')
-    expect(error).toMatch(/not valid player status/i)
+    expect(error).toMatch(/not valid member status/i)
   })
 
   it('broadcasts updated state to all lobby members', async () => {

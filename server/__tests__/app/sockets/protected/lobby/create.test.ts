@@ -37,13 +37,12 @@ describe('Protected Socket Namespace lobby:create', () => {
       id: expect.stringMatching(randomUUIDRegex),
       ownerId: aliceData.id,
       status: 'open',
-      maxPlayers: 4,
-      currentPlayerCount: 1,
-      players: {
+      maxMembers: 4,
+      currentMemberCount: 1,
+      members: {
         [aliceData.id]: {
           user: { id: aliceData.id, username: aliceData.username },
           status: 'not-ready',
-          result: { score: 0 },
         },
       },
     } as LobbyState<UserID, LobbyUser>)

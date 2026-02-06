@@ -1,10 +1,9 @@
-import { type ILobbyUser, LobbyPlayer } from '../LobbyPlayer'
+import { type ILobbyUser, LobbyMember } from '../LobbyMember'
 import type {
   LobbyID,
-  LobbyPlayerResult,
-  LobbyPlayerState,
-  LobbyPlayerStatus,
-  LobbyPlayerT,
+  LobbyMemberState,
+  LobbyMemberStatus,
+  LobbyMemberT,
   LobbyState,
   LobbyStatus,
   LobbyUserState,
@@ -21,53 +20,56 @@ class Lobby<
   LobbyUserState<TUserID, TUser>,
   LobbyStatus,
   LobbyState<TUserID, TUser>,
-  LobbyPlayerStatus,
-  LobbyPlayerState<TUserID, TUser>,
-  LobbyPlayerResult
+  LobbyMemberStatus,
+  LobbyMemberState<TUserID, TUser>
 > {
   #id: LobbyID
   #owner: TUser | undefined
   #status: LobbyStatus
-  readonly #players: Map<TUserID, LobbyPlayerT<TUserID, TUser>>
-  #maxPlayers: number
+  readonly #Members: Map<TUserID, LobbyMemberT<TUserID, TUser>>
+  #maxMembers: number
 
-  private readonly Player: new (user: TUser) => LobbyPlayerT<TUserID, TUser> =
-    LobbyPlayer<TUserID, TUser>
+  private readonly Member: new (user: TUser) => LobbyMemberT<TUserID, TUser> =
+    LobbyMember<TUserID, TUser>
 
-  constructor(owner: TUser, maxPlayers = 4) {
-    this.#players = new Map([[owner.id, new this.Player(owner)]])
+  constructor(owner: TUser, maxMembers = 4) {
+    this.#Members = new Map([[owner.id, new this.Member(owner)]])
 
     this.#status = 'open'
     this.#id = crypto.randomUUID()
     this.#owner = owner
-    this.#maxPlayers = maxPlayers
+    this.#maxMembers = maxMembers
   }
 
-  private get players() {
-    return this.#players
+  isOwner(user: TUser): boolean {
+    return user.id === this.owner?.id
+  }
+
+  private get Members() {
+    return this.#Members
   }
 
   get isEmpty() {
-    return this.#players.size === 0
+    return this.#Members.size === 0
   }
 
   remove(user: TUser): void {
-    this.players.delete(user.id)
+    this.Members.delete(user.id)
 
     if (user.id === this.owner?.id)
-      this.owner = this.#players.values().next().value?.user
+      this.owner = this.#Members.values().next().value?.user
   }
 
   get users() {
-    return this.players.keys()
+    return this.Members.keys()
   }
 
   add(user: TUser) {
-    this.players.set(user.id, new this.Player(user))
+    this.Members.set(user.id, new this.Member(user))
   }
 
   hasUser(userId: TUserID) {
-    return this.players.has(userId)
+    return this.Members.has(userId)
   }
 
   get state(): LobbyState<TUserID, TUser> {
@@ -75,15 +77,15 @@ class Lobby<
       id: this.id,
       ownerId: this.owner?.id,
       status: this.status,
-      maxPlayers: this.maxPlayers,
-      currentPlayerCount: this.#players.size,
-      players: Object.freeze(
-        [...this.#players.values()].reduce(
-          (acc, player) => {
-            acc[player.user.id] = player.state
+      maxMembers: this.maxMembers,
+      currentMemberCount: this.#Members.size,
+      members: Object.freeze(
+        [...this.#Members.values()].reduce(
+          (acc, Member) => {
+            acc[Member.user.id] = Member.state
             return acc
           },
-          {} as LobbyState<TUserID, TUser>['players']
+          {} as LobbyState<TUserID, TUser>['members']
         )
       ),
     })
@@ -93,19 +95,29 @@ class Lobby<
     this.status = 'closed'
   }
 
-  changeUserStatus(userId: TUserID, status: LobbyPlayerStatus): void {
-    const player = this.players.get(userId)
-
-    if (player) player.status = status
+  start(): void {
+    // this.Members.forEach(Member => (Member.status = 'in-game'))
+    this.status = 'starting'
   }
 
-  set status(state: LobbyStatus) {
-    this.#status = state
+  beginGame() {
+    this.status = 'game-in-progress'
+
+    for (const Member of this.Members.values()) Member.status = 'in-game'
+  }
+
+  changeUserStatus(userId: TUserID, status: LobbyMemberStatus): void {
+    const Member = this.Members.get(userId)
+    if (Member) Member.status = status
+  }
+
+  private set status(status: LobbyStatus) {
+    this.#status = status
   }
 
   // ------- Getters -----------
-  get maxPlayers() {
-    return this.#maxPlayers
+  get maxMembers() {
+    return this.#maxMembers
   }
 
   get id(): LobbyID {
@@ -125,12 +137,12 @@ class Lobby<
   }
 
   get isFull() {
-    return this.players.size >= this.maxPlayers
+    return this.Members.size >= this.maxMembers
   }
 
   get isReady() {
-    for (const player of this.players.values())
-      if (!player.isReady) return false
+    for (const Member of this.Members.values())
+      if (!Member.isReady) return false
 
     return true
   }

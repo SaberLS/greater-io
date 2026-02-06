@@ -101,9 +101,9 @@ describe('Protected Socket Namespace lobby:start', () => {
       id: lobbyId,
       ownerId: aliceData.id,
       status: 'starting',
-      maxPlayers: 4,
-      currentPlayerCount: 2,
-      players: {
+      maxMembers: 4,
+      currentMemberCount: 2,
+      members: {
         [aliceData.id]: {
           user: { id: aliceData.id, username: aliceData.username },
           status: 'in-game',

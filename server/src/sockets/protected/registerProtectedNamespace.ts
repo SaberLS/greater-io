@@ -8,9 +8,8 @@ import { parseError } from '@greater-io/shared'
 import type {
   ILobbyManager,
   LobbyID,
-  LobbyPlayerResult,
-  LobbyPlayerState,
-  LobbyPlayerStatus,
+  LobbyMemberState,
+  LobbyMemberStatus,
   LobbyState,
   LobbyStatus,
   LobbyStoreT,
@@ -34,7 +33,7 @@ function registerProtectedNamespace(
     LobbyUserID,
     LobbyUser,
     LobbyState<LobbyUserID, LobbyUser>,
-    LobbyPlayerStatus
+    LobbyMemberStatus
   > = new LobbyManager<
     LobbyID,
     LobbyUserID,
@@ -42,9 +41,8 @@ function registerProtectedNamespace(
     LobbyUserState<LobbyUserID, LobbyUser>,
     LobbyState<LobbyUserID, LobbyUser>,
     LobbyStatus,
-    // LobbyPlayerStatus,
-    LobbyPlayerState<LobbyUserID, LobbyUser>,
-    LobbyPlayerResult,
+    // LobbyMemberStatus,
+    LobbyMemberState<LobbyUserID, LobbyUser>,
     LobbyT<LobbyUserID, LobbyUser>,
     LobbyStoreT<LobbyUserID, LobbyUser>
   >(Lobby, new LobbyStore())
@@ -84,7 +82,8 @@ function registerProtectedNamespace(
 
       return (...args: Partial<TArgs> | unknown[]) => {
         try {
-          const lobby = listener(...args /* should be validate(...args) */)
+          // @ts-expect-error should be listener(validate(...args))
+          const lobby = listener(...args)
 
           if (opt.emitState && lobby)
             protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby)
@@ -146,8 +145,8 @@ function registerProtectedNamespace(
 
     socket.on(
       'lobby:status',
-      listenerHandler<[status: LobbyPlayerStatus]>(
-        (status: LobbyPlayerStatus) => lobbyManager.changeStatus(user, status)
+      listenerHandler<[status: LobbyMemberStatus]>(
+        (status: LobbyMemberStatus) => lobbyManager.changeStatus(user, status)
       )
     )
 

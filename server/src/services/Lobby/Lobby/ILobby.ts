@@ -1,4 +1,4 @@
-import type { ILobbyUser, IPlayerResult, IPlayerState } from '../LobbyPlayer'
+import type { ILobbyMemberState, ILobbyUser } from '../LobbyMember'
 
 interface ILobbyUserState<
   TUserID extends PropertyKey,
@@ -19,36 +19,33 @@ interface ILobby<
     TUserID,
     TUser,
     TUserState,
-    TPlayerResult,
-    TPlayerStatus,
-    TPlayerState,
+    TMemberStatus,
+    TMemberState,
     TLobbyStatus
   >,
-  TPlayerStatus,
-  TPlayerState extends IPlayerState<
-    TUserID,
-    TUserState,
-    TPlayerResult,
-    TPlayerStatus
-  >,
-  TPlayerResult extends IPlayerResult,
+  TMemberStatus,
+  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
 > {
   id: TLobbyID
-  // players: Readonly<Map<TUserID, TLobbyPlayer>>
+  // Members: Readonly<Map<TUserID, TLobbyMember>>
   status: TLobbyStatus
-  maxPlayers: number
+  maxMembers: number
   state: TLobbyState
-  isEmpty: boolean
-  isFull: boolean
 
   users: Iterable<TUserID>
-
   add(user: TUser): void
-  hasUser(userId: TUserID): boolean
-
-  changeUserStatus(userId: TUserID, status: TPlayerStatus): void
   remove(user: TUser): void
+
+  hasUser(userId: TUserID): boolean
+  isOwner(user: TUser): boolean
+  isEmpty: boolean
+  isFull: boolean
+  isReady: boolean
+
+  changeUserStatus(userId: TUserID, status: TMemberStatus): void
+
   close(): void
+  start(): void
 }
 
 interface ILobbyState<
@@ -56,22 +53,16 @@ interface ILobbyState<
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
   TUserState extends ILobbyUserState<TUserID, TUser>,
-  TPlayerResult extends IPlayerResult,
-  TPlayerStatus,
-  TPlayerState extends IPlayerState<
-    TUserID,
-    TUserState,
-    TPlayerResult,
-    TPlayerStatus
-  >,
+  TMemberStatus,
+  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
   TLobbyStatus,
 > extends Readonly<{
   readonly id: TLobbyID
   readonly ownerId: TUserID | undefined
   readonly status: TLobbyStatus
-  readonly maxPlayers: number
-  readonly currentPlayerCount: number
-  readonly players: Record<TUserID, TPlayerState>
+  readonly maxMembers: number
+  readonly currentMemberCount: number
+  readonly members: Record<TUserID, TMemberState>
 }> {}
 
 export type { ILobby, ILobbyState, ILobbyUserState }
