@@ -1,3 +1,4 @@
+import type { Callbacks } from '../../../utils'
 import type { ILobbyMemberState, ILobbyUser } from '../LobbyMember'
 
 interface ILobbyUserState<
@@ -46,29 +47,16 @@ interface ILobby<
 
   close(): void
 
-  start(
-    validateStart: <
-      TLobby extends ILobby<
-        TLobbyID,
-        TUserID,
-        TUser,
-        TUserState,
-        TLobbyStatus,
-        TLobbyState,
-        TMemberStatus,
-        TMemberState
-      >,
-    >(
-      lobby: TLobby
-    ) => void,
-    options: {
-      countFrom: number
-      delay: number
-      onStart?: ((count: number, lobby: TLobbyState) => void) | (() => void)
-      onTick?: ((count: number, lobby: TLobbyState) => void) | (() => void)
-      onEnd?: ((count: number, lobby: TLobbyState) => void) | (() => void)
-    }
-  ): Promise<void>
+  start(callbacks: Partial<Callbacks<string>>): Promise<void>
+  abortStart(reason: string): void
+  counterState: number
+}
+
+interface LobbyStartCallbacks<TAbortReason, TLobbyState> {
+  onStart: (lobby: TLobbyState) => void
+  onTick: (count: number, lobby: TLobbyState) => void
+  onEnd: (lobby: TLobbyState) => void
+  onAbort: (lobby: TLobbyState, reason: TAbortReason) => void
 }
 
 interface ILobbyState<
@@ -88,4 +76,4 @@ interface ILobbyState<
   readonly members: Record<TUserID, TMemberState>
 }
 
-export type { ILobby, ILobbyState, ILobbyUserState }
+export type { ILobby, ILobbyState, ILobbyUserState, LobbyStartCallbacks }

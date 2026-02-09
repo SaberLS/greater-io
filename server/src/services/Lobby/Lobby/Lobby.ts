@@ -1,4 +1,11 @@
-import { type ILobbyUser, LobbyMember } from '../LobbyMember'
+import ms from 'ms'
+import {
+  AsyncCounter,
+  createAbortController,
+  type Callbacks,
+  type TypedController,
+} from '../../../utils'
+import { LobbyMember, type ILobbyUser } from '../LobbyMember'
 import type {
   LobbyID,
   LobbyMemberState,
@@ -24,10 +31,12 @@ class Lobby<
   LobbyMemberState<TUserID, TUser>
 > {
   #id: LobbyID
-  #owner: TUser | undefined
+  #owner?: TUser
   readonly #members = new Map<TUserID, LobbyMemberT<TUserID, TUser>>()
   #status: LobbyStatus
   #maxMembers: number
+  #counter = new AsyncCounter<string>(ms('1s'), 10)
+  #controller?: TypedController<string>
 
   private readonly Member: new (user: TUser) => LobbyMemberT<TUserID, TUser> =
     LobbyMember<TUserID, TUser>
@@ -41,58 +50,27 @@ class Lobby<
     this.#maxMembers = maxMembers
   }
 
-  // cancelStart(reason: string) {
-  //   if (this.status !== 'starting') return
-
-  //   this.#reject?.(reason)
-  //   this.close()
-  //   this.cancelInterval()
-  // }
-
-  // cancelInterval() {
-  //   clearInterval(this.#intervalId)
-  //   this.#intervalId = undefined
-  //   this.#reject = undefined
-  // }
-
   close(): void {
     this.#status = 'closed'
   }
 
-  start(
-    validateStart: (lobby: Lobby<TUserID, TUser>) => void,
-    options: {
-      countFrom: number
-      delay: number
-      onStart?: (count: number, lobby: LobbyState<TUserID, TUser>) => void
-      onTick?: (count: number, lobby: LobbyState<TUserID, TUser>) => void
-      onEnd?: (count: number, lobby: LobbyState<TUserID, TUser>) => void
+  abortStart(reason: string): void {
+    this.#controller?.abort(reason)
+  }
+
+  get counterState() {
+    return this.#counter.state
+  }
+
+  async start(callbacks: Partial<Callbacks<string>>) {
+    this.#controller = createAbortController<string>()
+    this.#status = 'starting'
+
+    try {
+      await this.#counter.start(this.#controller.signal, callbacks)
+    } finally {
+      this.#controller = undefined
     }
-  ) {
-    // if (this.#intervalId) throw new Error('Lobby is already starting')
-    // this.#status = 'starting'
-    // return new Promise<void>((resolve, reject) => {
-    //   this.#reject = reject
-    //   let counter = options.countFrom
-    //   options.onStart?.(counter, this.state)
-    //   this.#intervalId = setInterval(() => {
-    //     try {
-    //       validateStart(this)
-    //       if (counter > 0) {
-    //         options.onTick?.(counter, this.state)
-    //       } else {
-    //         options.onEnd?.(counter, this.state)
-    //         this.cancelInterval()
-    //         resolve()
-    //       }
-    //       counter--
-    //     } catch (error) {
-    //       this.cancelInterval()
-    //       this.close()
-    //       reject(parseError(error).message)
-    //     }
-    //   }, options.delay)
-    // })
   }
 
   isOwner(user: TUser): boolean {
