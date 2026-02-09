@@ -120,14 +120,26 @@ class LobbyManager<
   changeStatus(user: TUser, status: LobbyMemberStatus): TLobbyState {
     const lobby = this.store.getLobbyByUserId(user.id)
 
-    if (lobby === undefined || !lobby.hasUser(user.id))
-      throw new Error(`User is not a lobby member`)
+    if (!lobby?.hasUser(user.id)) throw new Error(`User is not a lobby member`)
 
     lobby.changeUserStatus(user.id, status)
     return lobby.state
   }
 
-  start(user: TUser): TLobbyState {
+  async start(
+    user: TUser,
+    {
+      onStart,
+      onTick,
+      onEnd,
+      onAbort,
+    }: Partial<{
+      onStart: (lobby: TLobbyState) => void
+      onTick: (count: number, lobby: TLobbyState) => void
+      onEnd: (lobby: TLobbyState) => void
+      onAbort: (lobby: TLobbyState, reason: string) => void
+    }>
+  ) {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (lobby === undefined)
@@ -136,9 +148,26 @@ class LobbyManager<
       throw new Error(
         `User with id: ${String(user.id)}, is not an owner of lobby: ${String(lobby.id)}`
       )
+
+    if (lobby.status === 'starting') throw new Error('Game is already starting')
+    if (lobby.status === 'game-in-progress')
+      throw new Error('Game is currently in progress')
     if (!lobby.isReady) throw new Error(`Not all lobby members are ready`)
 
-    lobby.start()
+    await lobby.start({
+      onStart: () => {
+        onStart?.(lobby.state)
+      },
+      onTick: () => {
+        onTick?.(lobby.counterState, lobby.state)
+      },
+      onAbort:
+        onAbort === undefined ? undefined : (
+          (reason: string) => onAbort(lobby.state, reason)
+        ),
+      onEnd: onEnd === undefined ? undefined : () => onEnd(lobby.state),
+    })
+
     return lobby.state
   }
 }
