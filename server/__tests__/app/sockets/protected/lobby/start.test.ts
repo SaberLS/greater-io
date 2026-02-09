@@ -1,3 +1,4 @@
+import { parseError } from '@greater-io/shared'
 import type { Socket } from 'socket.io-client'
 import type { IUser, UserID } from '../../../../../src/models'
 import type {
@@ -11,10 +12,10 @@ describe('Protected Socket Namespace lobby:start', () => {
   const server = buildTestServer()
   let users: TestUsers
 
-  let aliceSocket: Socket
-  let aliceData: IUser
-  let patrykSocket: Socket
-  let patrykData: IUser
+  let ownerSocket: Socket
+  let ownerData: IUser
+  let playerSocket: Socket
+  let playerData: IUser
 
   let state: LobbyState<UserID, IUser>
   let lobbyId: LobbyState<UserID, IUser>['id']
@@ -23,96 +24,120 @@ describe('Protected Socket Namespace lobby:start', () => {
     await server.init()
     users = new TestUsers(server.url)
 
-    const [alice, patryk] = await Promise.all([
+    const [owner, player] = await Promise.all([
       users.getLoggedUser('alice'),
       users.getLoggedUser('patryk'),
     ])
-    aliceData = (await alice.me()).body.data
-    patrykData = (await patryk.me()).body.data
 
-    await Promise.all([
-      await alice.connectProtectedSocket(),
-      await patryk.connectProtectedSocket(),
-    ]).then(([a, p]) => {
-      aliceSocket = a
-      patrykSocket = p
+    await Promise.all([owner.me(), player.me()]).then(([o, p]) => {
+      ownerData = o.body.data
+      playerData = p.body.data
     })
 
-    aliceSocket.emit('lobby:create')
+    await Promise.all([
+      owner.connectProtectedSocket(),
+      player.connectProtectedSocket(),
+    ]).then(([a, p]) => {
+      ownerSocket = a
+      playerSocket = p
+    })
+
+    ownerSocket.emit('lobby:create')
     state = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      aliceSocket,
+      ownerSocket,
       'lobby:state'
     )
     lobbyId = state.id
 
-    patrykSocket.emit('lobby:join', state.id)
+    playerSocket.emit('lobby:join', state.id)
     state = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      patrykSocket,
+      playerSocket,
       'lobby:state'
     )
   })
 
   afterAll(async () => {
     await server.close()
-    aliceSocket.disconnect()
-    patrykSocket.disconnect()
+    ownerSocket.disconnect()
+    playerSocket.disconnect()
   })
 
   it('should reject when user is not an lobby owner', async () => {
-    patrykSocket.emit('lobby:start')
-    const error = await once(patrykSocket, 'lobby:error')
+    playerSocket.emit('lobby:start')
+    const error = await once<string>(playerSocket, 'lobby:error')
 
     expect(error).toEqual(
-      `User with id: ${String(patrykData.id)}, is not an owner of lobby: ${String(lobbyId)}`
+      `User with id: ${String(playerData.id)}, is not an owner of lobby: ${String(lobbyId)}`
     )
   })
 
   it('should reject when all users are not ready', async () => {
-    aliceSocket.emit('lobby:start')
-    const error = await once(aliceSocket, 'lobby:error')
+    ownerSocket.emit('lobby:start')
+    const error = await once<string>(ownerSocket, 'lobby:error')
 
     expect(error).toEqual(`Not all lobby members are ready`)
   })
 
   it('should reject when not all users are ready', async () => {
-    aliceSocket.emit('lobby:status', 'ready')
-    aliceSocket.emit('lobby:start')
-    const error = await once(aliceSocket, 'lobby:error')
+    ownerSocket.emit('lobby:status', 'ready')
+    ownerSocket.emit('lobby:start')
+    const error = await once<string>(ownerSocket, 'lobby:error')
 
     expect(error).toEqual(`Not all lobby members are ready`)
   })
 
-  it('should reject when not all users are ready', async () => {
-    aliceSocket.emit('lobby:status', 'ready')
-    aliceSocket.emit('lobby:start')
-    const error = await once(aliceSocket, 'lobby:error')
+  it('should start lobby countdown and emit events', async () => {
+    playerSocket.emit('lobby:status', 'ready')
+    state = await once<LobbyState<LobbyUserID, LobbyUser>>(
+      playerSocket,
+      'lobby:state'
+    )
 
-    expect(error).toEqual(`Not all lobby members are ready`)
-  })
+    const events: (number | string)[] = []
+    const expectedEvents = ['start', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 'end']
 
-  it('should succed when all users are ready', async () => {
-    patrykSocket.emit('lobby:status', 'ready')
-    state = await once(aliceSocket, 'lobby:state').then(() => {
-      aliceSocket.emit('lobby:start')
-      return once(aliceSocket, 'lobby:state')
+    ownerSocket.on('lobby:start:count:start', () => events.push('start'))
+    ownerSocket.on('lobby:start:count:tick', (c: string) => {
+      events.push(c)
+    })
+    ownerSocket.once('lobby:start:count:end', () => events.push('end'))
+
+    // start lobby
+    ownerSocket.on('lobby:error', (e: unknown) => {
+      throw parseError(e)
     })
 
+    ownerSocket.emit('lobby:start')
+
+    // after start
+    state = await once<LobbyState<LobbyUserID, LobbyUser>>(
+      playerSocket,
+      'lobby:state'
+    )
+
+    // after end
+    state = await once<LobbyState<LobbyUserID, LobbyUser>>(
+      playerSocket,
+      'lobby:state'
+    )
+
+    expect(events).toEqual(expectedEvents)
     expect(state).toEqual({
       id: lobbyId,
-      ownerId: aliceData.id,
+      ownerId: ownerData.id,
       status: 'starting',
       maxMembers: 4,
       currentMemberCount: 2,
       members: {
-        [aliceData.id]: {
-          user: { id: aliceData.id, username: aliceData.username },
-          status: 'in-game',
+        [ownerData.id]: {
+          user: { id: ownerData.id, username: ownerData.username },
+          status: 'ready',
         },
-        [patrykData.id]: {
-          user: { id: patrykData.id, username: patrykData.username },
-          status: 'in-game',
+        [playerData.id]: {
+          user: { id: playerData.id, username: playerData.username },
+          status: 'ready',
         },
       },
     } as LobbyState<UserID, LobbyUser>)
-  })
+  }, 15_000)
 })

@@ -3,7 +3,7 @@ import type { ILobbyMemberState, ILobbyUser } from '../LobbyMember'
 interface ILobbyUserState<
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
-> extends Readonly<{}> {
+> extends Readonly<object> {
   readonly id: TUser['id']
   readonly username: TUser['username']
 }
@@ -45,7 +45,30 @@ interface ILobby<
   changeUserStatus(userId: TUserID, status: TMemberStatus): void
 
   close(): void
-  start(): void
+
+  start(
+    validateStart: <
+      TLobby extends ILobby<
+        TLobbyID,
+        TUserID,
+        TUser,
+        TUserState,
+        TLobbyStatus,
+        TLobbyState,
+        TMemberStatus,
+        TMemberState
+      >,
+    >(
+      lobby: TLobby
+    ) => void,
+    options: {
+      countFrom: number
+      delay: number
+      onStart?: ((count: number, lobby: TLobbyState) => void) | (() => void)
+      onTick?: ((count: number, lobby: TLobbyState) => void) | (() => void)
+      onEnd?: ((count: number, lobby: TLobbyState) => void) | (() => void)
+    }
+  ): Promise<void>
 }
 
 interface ILobbyState<
@@ -56,13 +79,13 @@ interface ILobbyState<
   TMemberStatus,
   TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
   TLobbyStatus,
-> extends Readonly<{
+> extends Readonly<object> {
   readonly id: TLobbyID
   readonly ownerId: TUserID | undefined
   readonly status: TLobbyStatus
   readonly maxMembers: number
   readonly currentMemberCount: number
   readonly members: Record<TUserID, TMemberState>
-}> {}
+}
 
 export type { ILobby, ILobbyState, ILobbyUserState }

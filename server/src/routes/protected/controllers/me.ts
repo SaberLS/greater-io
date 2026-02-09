@@ -2,8 +2,10 @@ import { type Request, type Response } from 'express'
 import MESSAGES from '../../../CONSTS/MESSAGES.json'
 import type { IApiFailure, IApiSuccess, IUser } from '../../../models'
 
-async function meController(req: Request, res: Response) {
-  if (Boolean(req.user)) {
+type APIMeSuccess = IApiSuccess<IUser>
+
+function meController(req: Request, res: Response) {
+  if (req.user) {
     res.json({
       success: true,
       data: req.user,
@@ -17,4 +19,4 @@ async function meController(req: Request, res: Response) {
   }
 }
 
-export { meController }
+export { meController, type APIMeSuccess }

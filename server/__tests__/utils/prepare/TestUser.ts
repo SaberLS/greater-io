@@ -1,7 +1,13 @@
 import { type Socket, io as ioClient } from 'socket.io-client'
 import request, { type Response } from 'supertest'
 import type TestAgent from 'supertest/lib/agent'
+import type { IApiFailure } from '../../../src/models'
+import type { APIMeSuccess } from '../../../src/routes/protected/controllers'
 import type { ICredentials } from '../../types/ICredentials'
+
+interface SuperResponse<TBody = object> extends Response {
+  body: TBody | IApiFailure
+}
 
 class TestUser {
   private readonly _agent: TestAgent
@@ -10,13 +16,10 @@ class TestUser {
   private _socket?: Socket
   private _url: string
 
-  constructor(
-    url: string,
-    credentials = { username: 'alice', password: 'secret' }
-  ) {
+  constructor(url: string, credentials?: ICredentials) {
     this._url = url
     this._agent = request.agent(url).set('Accept', 'application/json')
-    this._credentials = credentials
+    this._credentials = credentials ?? { username: 'alice', password: 'secret' }
   }
 
   async login(): Promise<Response> {
@@ -37,8 +40,12 @@ class TestUser {
     return this.agent.post('/auth/logout').set('Authorization', this.bearer)
   }
 
-  async me(): Promise<Response> {
-    return this.agent.get('/protected/me').set('Authorization', this.bearer)
+  async me(): Promise<SuperResponse<APIMeSuccess>> {
+    return this.agent
+      .get('/protected/me')
+      .set('Authorization', this.bearer) as unknown as Promise<
+      SuperResponse<APIMeSuccess>
+    >
   }
 
   async health(): Promise<Response> {
@@ -84,12 +91,16 @@ class TestUser {
     return `Bearer ${this.token}`
   }
 
-  set token(newToken: string | undefined) {
-    this._token = newToken
+  get socket(): Socket | undefined {
+    return this._socket
   }
 
   get agent() {
     return this._agent
+  }
+
+  set token(newToken: string | undefined) {
+    this._token = newToken
   }
 
   get token() {

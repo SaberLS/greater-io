@@ -14,6 +14,9 @@ interface IoAuthData {
   user?: IoAuthenticatedUser
 }
 
+interface AuthPayload extends JwtPayload {
+  token: string
+}
 interface IoSocketBeforeAuth extends Socket<
   DefaultEventsMap,
   DefaultEventsMap,
@@ -21,7 +24,7 @@ interface IoSocketBeforeAuth extends Socket<
   IoAuthData
 > {
   handshake: Socket['handshake'] & {
-    auth?: Partial<JwtPayload>
+    auth?: Partial<AuthPayload>
   }
 }
 
@@ -51,8 +54,6 @@ interface IoAuthenticatedUserSocket extends Socket<
     auth: JwtPayload
   }
 }
-
-interface LobbyUser extends IoAuthenticatedUserSocket {}
 
 interface AuthenticatedEventsMap extends DefaultEventsMap {
   connection: (socket: IoAuthenticatedUserSocket) => void

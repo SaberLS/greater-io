@@ -26,6 +26,8 @@ import { socketJwtAuth } from './socketJWTAuth'
 function registerProtectedNamespace(
   namespace: Namespace
 ): IoAuthenticatedNamespace {
+  // HACK: it works with promise
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const protectedNs = namespace.use(socketJwtAuth) as IoAuthenticatedNamespace
 
   const lobbyManager: ILobbyManager<
@@ -59,6 +61,11 @@ function registerProtectedNamespace(
     next()
   })
 
+  const emitLobbyState = (
+    lobby: LobbyState<LobbyUserID, LobbyUser>,
+    room = `lobby:${lobby.id}`
+  ) => protectedNs.to(room).emit('lobby:state', lobby)
+
   protectedNs.on('connection', socket => {
     const { user } = socket.data
 
@@ -68,7 +75,11 @@ function registerProtectedNamespace(
 
     const listenerHandler = <TArgs extends unknown[]>(
       // TODO: add validation like validate: (...args: unknown[]) => TArgs,
-      listener: (...args: TArgs) => LobbyState<LobbyUserID, LobbyUser> | void,
+      listener: (
+        ...args: TArgs
+      ) =>
+        | (LobbyState<LobbyUserID, LobbyUser> | void)
+        | Promise<LobbyState<LobbyUserID, LobbyUser> | void>,
       options?: Partial<{
         emitError: boolean
         emitState: boolean
@@ -80,29 +91,28 @@ function registerProtectedNamespace(
         ...options,
       }
 
-      return (...args: Partial<TArgs> | unknown[]) => {
+      return async (...args: Partial<TArgs> | unknown[]) => {
         try {
-          // @ts-expect-error should be listener(validate(...args))
-          const lobby = listener(...args)
+          const lobby = await listener(...args)
 
-          if (opt.emitState && lobby)
-            protectedNs.to(`lobby:${lobby.id}`).emit('lobby:state', lobby)
-        } catch (e) {
-          if (opt.emitError) socket.emit('lobby:error', parseError(e).message)
+          if (opt.emitState && lobby) emitLobbyState(lobby)
+        } catch (error) {
+          if (opt.emitError)
+            socket.emit('lobby:error', parseError(error).message)
         }
       }
     }
 
-    const leaveLobbySafely = (reason: 'leave' | 'disconnect') => {
+    const leaveLobbySafely = async (reason: 'leave' | 'disconnect') => {
       try {
         const lobby = lobbyManager.leave(socket.data.user)
         const lobbyRoom = `lobby:${lobby.id}`
-        socket.leave(lobbyRoom)
+        await socket.leave(lobbyRoom)
 
         protectedNs.to(lobbyRoom).emit('lobby:state', lobby)
-      } catch (e) {
+      } catch (error) {
         if (reason === 'leave')
-          socket.emit('lobby:error', parseError(e).message)
+          socket.emit('lobby:error', parseError(error).message)
       } finally {
         socket.data.lobbyId = undefined
       }
@@ -110,11 +120,11 @@ function registerProtectedNamespace(
 
     socket.on(
       'lobby:create',
-      listenerHandler(() => {
+      listenerHandler(async () => {
         const lobby = lobbyManager.create(socket.data.user)
 
         socket.data.lobbyId = lobby.id
-        socket.join(`lobby:${lobby.id}`)
+        await socket.join(`lobby:${lobby.id}`)
 
         return lobby
       })
@@ -122,22 +132,22 @@ function registerProtectedNamespace(
 
     socket.on(
       'lobby:join',
-      listenerHandler<[lobbyId: LobbyID]>(lobbyId => {
+      listenerHandler<[lobbyId: LobbyID]>(async lobbyId => {
         const lobby = lobbyManager.join(user, lobbyId)
 
-        socket.join(`lobby:${lobby.id}`)
+        await socket.join(`lobby:${lobby.id}`)
         socket.data.lobbyId = lobby.id
 
         return lobby
       })
     )
 
-    socket.on('lobby:leave', () => {
-      leaveLobbySafely('leave')
+    socket.on('lobby:leave', async () => {
+      await leaveLobbySafely('leave')
     })
 
-    socket.on('disconnect', () => {
-      leaveLobbySafely('disconnect')
+    socket.on('disconnect', async () => {
+      await leaveLobbySafely('disconnect')
 
       // @ts-expect-error clear the socket on user disconnection
       delete user.socketId

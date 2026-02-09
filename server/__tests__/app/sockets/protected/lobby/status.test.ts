@@ -13,6 +13,7 @@ describe('Protected Socket Namespace lobby:status', () => {
   let users: TestUsers
 
   let aliceSocket: Socket
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let aliceData: IUser
   let patrykSocket: Socket
   let patrykData: IUser
@@ -25,12 +26,15 @@ describe('Protected Socket Namespace lobby:status', () => {
       users.getLoggedUser('alice'),
       users.getLoggedUser('patryk'),
     ])
-    aliceData = (await alice.me()).body.data
-    patrykData = (await patryk.me()).body.data
+
+    await Promise.all([alice.me(), patryk.me()]).then(([a, p]) => {
+      aliceData = a.body.data
+      patrykData = p.body.data
+    })
 
     await Promise.all([
-      await alice.connectProtectedSocket(),
-      await patryk.connectProtectedSocket(),
+      alice.connectProtectedSocket(),
+      patryk.connectProtectedSocket(),
     ]).then(([a, p]) => {
       aliceSocket = a
       patrykSocket = p
@@ -69,7 +73,7 @@ describe('Protected Socket Namespace lobby:status', () => {
   it('rejects invalid member status', async () => {
     aliceSocket.emit('lobby:status', 'INVALID_STATUS')
 
-    const error = await once(aliceSocket, 'lobby:error')
+    const error = await once<string>(aliceSocket, 'lobby:error')
     expect(error).toMatch(/not valid member status/i)
   })
 
@@ -77,8 +81,8 @@ describe('Protected Socket Namespace lobby:status', () => {
     patrykSocket.emit('lobby:status', 'not-ready')
 
     const [aliceState, patrykState] = await Promise.all([
-      once(aliceSocket, 'lobby:state'),
-      once(patrykSocket, 'lobby:state'),
+      once<LobbyState<LobbyUserID, LobbyUser>>(aliceSocket, 'lobby:state'),
+      once<LobbyState<LobbyUserID, LobbyUser>>(patrykSocket, 'lobby:state'),
     ])
 
     expect(aliceState).toEqual(patrykState)

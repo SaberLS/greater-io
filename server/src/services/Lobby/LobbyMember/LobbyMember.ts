@@ -39,7 +39,7 @@ class LobbyMember<
   set status(status: LobbyMemberStatus) {
     if (status === 'in-game' || status === 'ready' || status === 'not-ready')
       this.#status = status
-    else throw new Error(`${status} is not valid member status`)
+    else throw new Error(`${String(status)} is not valid member status`)
   }
 
   get isReady() {

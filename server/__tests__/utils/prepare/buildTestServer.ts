@@ -3,23 +3,21 @@ import { closeServer } from '@greater-io/server/src/server'
 import type { ServerBundle } from '@greater-io/server/src/types/serverBundle'
 import { getUrl } from '@greater-io/server/src/utils/getUrl'
 
-type TestServer = {
+interface TestServer {
   bundle: ServerBundle
   url: string
   init: () => Promise<void>
   close: () => Promise<void>
 }
 
-const buildTestServer = (
-  config: Partial<Config> = { isProd: false, silent: true }
-): TestServer => {
+const buildTestServer = (config?: Partial<Config>): TestServer => {
   let bundle: ServerBundle | undefined
   let url: string | undefined
 
   const init = async () => {
     if (bundle) throw new Error('Server already initialized')
 
-    bundle = await main(config)
+    bundle = await main({ isProd: false, silent: true, ...config })
     url = getUrl(bundle.httpServer)
   }
 

@@ -1,7 +1,37 @@
 import type { Socket } from 'socket.io-client'
 
-function once<T = any>(socket: Socket, event: string): Promise<T> {
-  return new Promise(resolve => socket.once(event, resolve))
+function once<T = any>(
+  socket: Socket,
+  event: string,
+  trigger?: () => void
+): Promise<T> {
+  return new Promise(resolve => {
+    socket.once(event, resolve)
+    trigger?.()
+  })
 }
 
-export { once }
+function waitFor(): {
+  resolve: (value: void | PromiseLike<void>) => void
+  reject: (reason?: any) => void
+  promise: Promise<void>
+} {
+  const res: Partial<{
+    resolve: (value: void | PromiseLike<void>) => void
+    reject: (reason?: any) => void
+    promise: Promise<void>
+  }> = {}
+
+  res.promise = new Promise<void>((resolve, reject) => {
+    res.resolve = resolve
+    res.reject = reject
+  })
+
+  return res as {
+    resolve: (value: void | PromiseLike<void>) => void
+    reject: (reason?: any) => void
+    promise: Promise<void>
+  }
+}
+
+export { once, waitFor }
