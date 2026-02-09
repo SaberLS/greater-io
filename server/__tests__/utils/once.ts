@@ -1,6 +1,6 @@
 import type { Socket } from 'socket.io-client'
 
-function once<T = any>(
+function once<T = unknown>(
   socket: Socket,
   event: string,
   trigger?: () => void
@@ -13,12 +13,12 @@ function once<T = any>(
 
 function waitFor(): {
   resolve: (value: void | PromiseLike<void>) => void
-  reject: (reason?: any) => void
+  reject: (reason?: unknown) => void
   promise: Promise<void>
 } {
   const res: Partial<{
     resolve: (value: void | PromiseLike<void>) => void
-    reject: (reason?: any) => void
+    reject: (reason?: unknown) => void
     promise: Promise<void>
   }> = {}
 
@@ -29,7 +29,7 @@ function waitFor(): {
 
   return res as {
     resolve: (value: void | PromiseLike<void>) => void
-    reject: (reason?: any) => void
+    reject: (reason?: unknown) => void
     promise: Promise<void>
   }
 }
