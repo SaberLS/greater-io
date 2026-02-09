@@ -101,21 +101,16 @@ describe('Protected Socket Namespace lobby:start', () => {
       events.push(c)
     })
     ownerSocket.once('lobby:start:count:end', () => events.push('end'))
-
-    // start lobby
     ownerSocket.on('lobby:error', (e: unknown) => {
       throw parseError(e)
     })
 
+    // start lobby
     ownerSocket.emit('lobby:start')
-
-    // after start
     state = await once<LobbyState<LobbyUserID, LobbyUser>>(
       playerSocket,
       'lobby:state'
     )
-
-    // after end
     state = await once<LobbyState<LobbyUserID, LobbyUser>>(
       playerSocket,
       'lobby:state'
