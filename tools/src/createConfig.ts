@@ -30,8 +30,6 @@ const createConfig = (__dirname: string): Config => {
       files: ['**/*.{mts,cts,tsx,ts}'],
       languageOptions: {
         parserOptions: {
-          project: true,
-          projectService: true,
           tsconfigRootDir: __dirname,
         },
       },
@@ -91,15 +89,13 @@ const createConfig = (__dirname: string): Config => {
       },
     },
     {
+      files: ['__tests__/**/**.{test,spec}.{js,ts,jsx,tsx}'],
       ...pluginJest.configs['flat/recommended'],
-      files: ['__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}'],
       plugins: { jest: pluginJest },
       languageOptions: {
-        ...pluginJest.configs['flat/recommended'].languageOptions,
         parserOptions: {
-          ...pluginJest.configs['flat/recommended'].languageOptions
-            ?.parserOptions,
-          tsconfigRootDir: __dirname + `\\__tests__`,
+          projectService: true,
+          tsconfigRootDir: __dirname + `/__tests__`,
         },
       },
       rules: {

@@ -1,4 +1,4 @@
-import { createConfig } from '@projektinz/tools'
+import { createConfig } from '@greater-io/tools'
 
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

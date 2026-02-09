@@ -3,7 +3,7 @@
     "composite": true,
     "outDir": "dist", // Compiled JS output
     "types": ["node"],
-    "rootDir": "." // source files location
+    "rootDir": "./" // source files location
   },
   "exclude": ["node_modules", "dist", "__tests__"],
   "extends": "../tsconfig.base.json",

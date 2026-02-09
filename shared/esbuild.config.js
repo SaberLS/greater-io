@@ -3,11 +3,7 @@ import { nodeExternalsPlugin } from 'esbuild-node-externals'
 
 try {
   const result = await build({
-    entryPoints: [
-      'src/index.ts',
-      'src/utils/index.ts',
-      'src/constants/index.ts',
-    ],
+    entryPoints: ['src/index.ts', 'src/utils/index.ts'],
     outdir: 'dist',
     bundle: true,
     format: 'esm',

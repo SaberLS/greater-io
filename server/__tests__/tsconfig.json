@@ -1,11 +1,9 @@
 {
   "compilerOptions": {
-    "rootDir": "../",
-    "paths": {
-      "@server/*": ["./src/server/*"]
-    },
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "rootDir": "../"
   },
   "exclude": ["../node_modules", "../dist"],
-  "extends": "../tsconfig.json"
+  "extends": "../tsconfig.json",
+  "include": ["./jest.config.ts", "../"]
 }
