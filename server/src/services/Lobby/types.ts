@@ -7,10 +7,10 @@ type LobbyID = ReturnType<typeof crypto.randomUUID>
 type LobbyUserID = UserID
 type LobbyUser = ISocketUser
 
-interface LobbyUserState<
+type LobbyUserState<
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
-> extends ILobbyUserState<TUserID, TUser> {}
+> = ILobbyUserState<TUserID, TUser>
 
 // interface LobbyPlayerResult extends IPlayerResult {}
 type LobbyMemberStatus = 'ready' | 'in-game' | 'not-ready'
@@ -34,12 +34,7 @@ type LobbyMemberT<
   LobbyMemberState<TUserID, TUser>
 >
 
-type LobbyStatus =
-  | 'open'
-  | 'closed'
-  | 'game-in-progress'
-  | 'starting'
-  | 'finished'
+type LobbyStatus = 'open' | 'closed' | 'game-in-progress' | 'starting'
 
 type LobbyState<
   TUserID extends PropertyKey,
