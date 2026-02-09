@@ -160,13 +160,40 @@ function registerProtectedNamespace(
       )
     )
 
-    socket.on(
-      'lobby:start',
-      listenerHandler(() => lobbyManager.start(user))
-    )
+    socket.on('lobby:start', async () => {
+      try {
+        await lobbyManager.start(user, {
+          onStart(lobby: LobbyState<LobbyUserID, LobbyUser>) {
+            protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:start')
+
+            emitLobbyState(lobby)
+          },
+          onTick(count: number, lobby: LobbyState<LobbyUserID, LobbyUser>) {
+            protectedNs
+              .to(`lobby:${lobby.id}`)
+              .emit('lobby:start:count:tick', 10 - count)
+          },
+          onEnd(lobby: LobbyState<LobbyUserID, LobbyUser>) {
+            protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:end')
+
+            emitLobbyState(lobby)
+          },
+          onAbort(lobby: LobbyState<LobbyUserID, LobbyUser>, reason: string) {
+            socket.emit('lobby:start:abort', reason)
+
+            emitLobbyState(lobby)
+          },
+        })
+      } catch (error) {
+        socket.emit('lobby:error', parseError(error).message)
+      }
+    })
   })
 
-  return protectedNs as IoAuthenticatedNamespace
+  // -_-_-_-_-_-_ GAME -_-_-_-_-_-_
+  // socket.on('game:action', () => {})
+
+  return protectedNs
 }
 
 export { registerProtectedNamespace }
