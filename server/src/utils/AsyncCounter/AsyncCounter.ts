@@ -78,8 +78,8 @@ class AsyncCounter<TAbortReason> {
         try {
           if (signal.aborted) return onSignalAbort()
 
-          this.#state++
           onTick?.()
+          this.#state++
 
           if (this.state >= this.limit) end()
         } catch (error) {
