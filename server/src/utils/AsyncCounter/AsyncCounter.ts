@@ -4,7 +4,7 @@ import type { TypedSignal } from './TypedController'
 type ResolveReason = 'finished' | 'aborted'
 interface Callbacks<TAbortReason> {
   onTick: () => void
-  onAbort: (reason?: TAbortReason) => void
+  onAbort: (reason: TAbortReason) => void
   onStart: () => void
   onEnd: () => void
 }
