@@ -1,6 +1,6 @@
 import type { IApiResponse } from './IApiResponse'
 
-interface IApiSuccess<TData> extends IApiResponse<TData> {
+type IApiSuccess<TData> = IApiResponse<TData> & {
   success: true
 }
 
