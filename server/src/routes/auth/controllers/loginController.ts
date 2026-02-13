@@ -1,6 +1,7 @@
 import { parseError, success } from '@greater-io/shared'
 import type { NextFunction, Request, Response } from 'express'
 import passport from 'passport'
+import MESSAGES from '../../../CONSTS/MESSAGES.json'
 import type { IApiResponse } from '../../../models/ApiResponse/IApiResponse'
 import type { IAuthData } from '../../../models/IAuthData'
 import type { IUser } from '../../../models/User/IUser'
@@ -20,15 +21,15 @@ const loginController = (req: Request, res: Response, next: NextFunction) => {
     'local',
     (
       error_: unknown,
-      user: IUserDBO | undefined,
-      info: { message: string }
+      user: IUserDBO | undefined
+      // info: { message: string }
     ) => {
       try {
         if (error_) return next(error_)
         if (!user) {
           return res.status(401).json({
             success: false,
-            message: info?.message,
+            message: MESSAGES.auth.login[401],
           })
         }
 
@@ -44,8 +45,8 @@ const loginController = (req: Request, res: Response, next: NextFunction) => {
             },
             auth,
           },
-          message: info?.message,
-        } as LoginResponse)
+          message: MESSAGES.auth.login[200],
+        } satisfies LoginResponse)
       } catch (error_: unknown) {
         next(parseError(error_))
       }
@@ -54,3 +55,4 @@ const loginController = (req: Request, res: Response, next: NextFunction) => {
 }
 
 export { loginController }
+export type { LoginData, LoginResponse }

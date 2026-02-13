@@ -6,9 +6,12 @@ import {
   type Response,
 } from 'express'
 import MESSAGES from '../../../CONSTS/MESSAGES.json'
+import type { IApiResponse } from '../../../models'
 import { Server } from '../../../server'
 
-const logoutController: RequestHandler = async (
+type LogoutResponse = IApiResponse<never>
+
+const logoutController: RequestHandler = (
   req: Request,
   res: Response,
   next: NextFunction
@@ -32,10 +35,11 @@ const logoutController: RequestHandler = async (
     res.json({
       success: true,
       message: MESSAGES.auth.logout[200],
-    })
+    } satisfies LogoutResponse)
   } catch (error_: unknown) {
     next(parseError(error_))
   }
 }
 
 export { logoutController }
+export type { LogoutResponse }
