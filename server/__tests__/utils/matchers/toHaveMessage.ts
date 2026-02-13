@@ -1,5 +1,7 @@
 import type { MatcherFunction } from 'expect'
+import type { IApiResponse } from '../../../src/models'
 import { isSupertestResponse } from '../isSupertestResponse'
+import type { SuperResponse } from '../types'
 
 const toHaveMessage: MatcherFunction<[message: string]> = function (
   actual: unknown,
@@ -8,14 +10,19 @@ const toHaveMessage: MatcherFunction<[message: string]> = function (
   if (!isSupertestResponse(actual)) {
     throw new TypeError('actual needs to be a supertest response')
   }
+
   if (typeof expectedMessage !== 'string') {
-    throw new TypeError('expectedStatus needs to be a string')
+    throw new TypeError('expectedMessage needs to be a string')
   }
 
-  const pass = actual.body?.message === expectedMessage
+  const pass =
+    (actual as SuperResponse<IApiResponse<unknown>>).body?.message ===
+    expectedMessage
 
   const printExpected = this.utils.printExpected(expectedMessage)
-  const printReceived = this.utils.printReceived(actual.body?.message)
+  const printReceived = this.utils.printReceived(
+    (actual as SuperResponse<IApiResponse<unknown>>).body?.message
+  )
 
   const hint =
     pass ?

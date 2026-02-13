@@ -1,12 +1,15 @@
 import type { MatcherFunction } from 'expect'
+import type { IApiResponse } from '../../../src/models'
 import { isSupertestResponse } from '../isSupertestResponse'
+import type { SuperResponse } from '../types'
 
 const toBeSuccessful: MatcherFunction<[]> = function (actual: unknown) {
   if (!isSupertestResponse(actual)) {
     throw new TypeError('actual needs to be a supertest response')
   }
 
-  const pass = actual.body?.success === true
+  const pass =
+    (actual as SuperResponse<IApiResponse<unknown>>).body?.success === true
 
   const message =
     pass ?
