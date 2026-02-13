@@ -127,4 +127,3 @@ class TestUser {
 }
 
 export { TestUser }
-export type { SuperResponse }
