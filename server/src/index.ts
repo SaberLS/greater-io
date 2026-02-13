@@ -2,4 +2,4 @@
 import { IS_PRODUCTION, PORT } from './CONSTS/DOTENV'
 import { main } from './main'
 
-main({ port: PORT, isProd: IS_PRODUCTION })
+void main({ port: PORT, isProd: IS_PRODUCTION })
