@@ -89,10 +89,11 @@ const createConfig = (__dirname: string): Config => {
       },
     },
     {
-      files: ['__tests__/**/**.{test,spec}.{js,ts,jsx,tsx}'],
+      files: ['__tests__/**/*.{js,mjs,mts,cts,cjs,ts,jsx,tsx}'],
       ...pluginJest.configs['flat/recommended'],
       plugins: { jest: pluginJest },
       languageOptions: {
+        globals: pluginJest.environments.globals.globals,
         parserOptions: {
           projectService: true,
           tsconfigRootDir: __dirname + `/__tests__`,
