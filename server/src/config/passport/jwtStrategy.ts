@@ -12,22 +12,24 @@ const jwtStrategy = new JwtStrategy(
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: JWT_SECRET,
   },
-  verify
+  (payload: JwtPayload, done: VerifiedCallback) => {
+    void verify(payload, done)
+  }
 )
 
 async function verify(payload: JwtPayload, done: VerifiedCallback) {
   const user = await userRepository.getUserById(payload.sub)
 
-  if (!user) return done(null, false)
+  if (!user) return void done(undefined, false)
 
   if (
     typeof payload.tokenVersion !== 'number' ||
     payload.tokenVersion !== user.tokenVersion
   ) {
-    return done(null, false) // token revoked
+    return void done(undefined, false) // token revoked
   }
 
-  return done(null, user)
+  return void done(undefined, user)
 }
 
 export { jwtStrategy }
