@@ -1,10 +1,9 @@
-/* eslint-disable no-undef */
 import type { IApiResponse } from '../../src/models'
 import './matchers/toBeOk'
 import './matchers/toBeSuccessful'
 import './matchers/toHaveMessage'
 import './matchers/toHaveStatus'
-import type { SuperResponse } from './prepare'
+import type { SuperResponse } from './types'
 
 type Messages<TCodes extends [200 | 201 | 204, ...number[]]> = Record<
   TCodes[number],
