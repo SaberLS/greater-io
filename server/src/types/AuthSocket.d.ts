@@ -88,6 +88,7 @@ interface IoAuthenticatedNamespace extends Namespace<
 export type {
   IoAuthenticatedNamespace,
   IoAuthenticatedSocket,
+  IoAuthenticatedUser,
   IoAuthenticatedUserSocket,
   IoSocketBeforeAuth,
 }

@@ -1,8 +1,8 @@
 import 'express'
-import type { IUser } from '../models'
+import type { IoAuthenticatedUser } from './AuthSocket'
 
 declare module 'express' {
   interface Request {
-    user: IUser
+    user: IoAuthenticatedUser
   }
 }
