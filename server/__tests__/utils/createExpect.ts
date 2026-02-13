@@ -1,8 +1,10 @@
-import request from 'supertest'
+/* eslint-disable no-undef */
+import type { IApiResponse } from '../../src/models'
 import './matchers/toBeOk'
 import './matchers/toBeSuccessful'
 import './matchers/toHaveMessage'
 import './matchers/toHaveStatus'
+import type { SuperResponse } from './prepare'
 
 type Messages<TCodes extends [200 | 201 | 204, ...number[]]> = Record<
   TCodes[number],
@@ -14,7 +16,7 @@ function createExpectRes<TCodes extends [200 | 201 | 204, ...number[]]>(
 ) {
   type CodesUnion = TCodes[number]
 
-  return (res: request.Response) => {
+  return <TData>(res: SuperResponse<IApiResponse<TData>>) => {
     const haveMessage = (status: CodesUnion) => {
       if (!(status in messages)) {
         throw new Error(`No message defined for status ${status}`)
