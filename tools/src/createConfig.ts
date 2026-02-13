@@ -89,7 +89,7 @@ const createConfig = (__dirname: string): Config => {
       },
     },
     {
-      files: ['__tests__/**/*.{js,mjs,mts,cts,cjs,ts,jsx,tsx}'],
+      files: ['**/__tests__/**/*.{js,mjs,mts,cts,cjs,ts,jsx,tsx}'],
       ...pluginJest.configs['flat/recommended'],
       plugins: { jest: pluginJest },
       languageOptions: {
