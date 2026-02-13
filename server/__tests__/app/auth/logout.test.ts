@@ -16,12 +16,14 @@ describe('POST /auth/logout', () => {
     await server.close()
   })
 
+  // eslint-disable-next-line jest/expect-expect
   it('should fail when user is not logged in', async () => {
     const res = await agent.logout()
 
     expectLogout(res).fail(401).and.haveMessage()
   })
 
+  // eslint-disable-next-line jest/expect-expect
   it('should succed when user is logged in', async () => {
     await agent.login()
     const res = await agent.logout()

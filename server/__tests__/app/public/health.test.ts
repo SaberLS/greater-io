@@ -17,6 +17,8 @@ describe('GET public/health', () => {
     await server.close()
   })
 
+  // Custom expect
+  // eslint-disable-next-line jest/expect-expect
   it('should return success', async () => {
     const res = await user.health()
     expectRes(res).success().and.haveMessage()

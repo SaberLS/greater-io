@@ -1,52 +1,56 @@
-import type { Socket } from 'socket.io-client'
 import type { IUser, UserID } from '../../../../../src/models'
 import type { LobbyState, LobbyUser } from '../../../../../src/services'
-import { buildTestServer, TestUsers } from '../../../../utils'
-import { randomUUIDRegex } from '../../../../utils/matchers/randomUUIDRegex'
+import {
+  buildTestServer,
+  TestUsers,
+  type TestUserMethods,
+} from '../../../../utils'
+import { expectLobbyId } from '../../../../utils/matchers/randomUUIDRegex'
 
 describe('Protected Socket Namespace lobby:create', () => {
   const server = buildTestServer()
 
   let users: TestUsers
-  let aliceSocket: Socket
-  let aliceData: IUser
+  let alice: TestUserMethods<'protectedSocket' | 'me'>
 
   beforeAll(async () => {
     await server.init()
-    users = new TestUsers(server.url)
 
-    const alice = await users.getLoggedUser('alice')
-    aliceData = (await alice.me()).body.data
-    aliceSocket = await alice.connectProtectedSocket()
+    users = new TestUsers(server.url)
+    alice = await users
+      .prepareLoggedUser('alice', 'me', 'protectedSocket')
+      .then(users.unpackData)
   })
 
   afterAll(async () => {
     await server.close()
-    aliceSocket.disconnect()
+    alice.protectedSocket.disconnect()
   })
 
   it('should create a lobby successfully', async () => {
     // Listen for the lobby state after creation
-    const state: LobbyState<UserID, IUser> = await new Promise<any>(resolve => {
-      aliceSocket.once('lobby:state', resolve)
-      aliceSocket.emit('lobby:create')
+    const state: LobbyState<UserID, IUser> = await new Promise<
+      LobbyState<UserID, IUser>
+    >(resolve => {
+      alice.protectedSocket.once('lobby:state', resolve)
+      alice.protectedSocket.emit('lobby:create')
     })
 
     // Validate the returned lobby state
     expect(state).toEqual({
-      id: expect.stringMatching(randomUUIDRegex),
-      ownerId: aliceData.id,
+      id: expectLobbyId,
+      ownerId: alice.me.id,
       status: 'open',
       maxMembers: 4,
       currentMemberCount: 1,
       members: {
-        [aliceData.id]: {
-          user: { id: aliceData.id, username: aliceData.username },
+        [alice.me.id]: {
+          user: { id: alice.me.id, username: alice.me.username },
           status: 'not-ready',
         },
       },
     } as LobbyState<UserID, LobbyUser>)
 
-    aliceSocket.disconnect()
+    alice.protectedSocket.disconnect()
   })
 })

@@ -16,7 +16,7 @@ describe('Protected Socket Namespace', () => {
 
   it('should respond with secure-pong', async () => {
     await user.login()
-    const socket = await user.connectProtectedSocket()
+    const socket = await user.protectedSocket()
 
     await new Promise<void>(resolve => {
       socket.once('secure-pong', msg => {
@@ -33,8 +33,6 @@ describe('Protected Socket Namespace', () => {
   it('should reject socket without token', async () => {
     const unauthUser = new TestUser(server.url)
 
-    await expect(unauthUser.connectProtectedSocket()).rejects.toThrow(
-      'Unauthorized'
-    )
+    await expect(unauthUser.protectedSocket()).rejects.toThrow('Unauthorized')
   })
 })

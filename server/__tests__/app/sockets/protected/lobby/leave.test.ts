@@ -1,17 +1,26 @@
-import type { Socket } from 'socket.io-client'
 import type { IUser, UserID } from '../../../../../src/models'
 
 import type { LobbyState, LobbyUser } from '../../../../../src/services'
-import { buildTestServer, TestUsers } from '../../../../utils'
+import {
+  buildTestServer,
+  TestUsers,
+  type TestUserMethods,
+} from '../../../../utils'
+
+const prepareUsers = (
+  users: TestUsers
+): Promise<TestUserMethods<'protectedSocket' | 'me'>[]> =>
+  Promise.all([
+    users.prepareLoggedUser('alice', 'me', 'protectedSocket'),
+    users.prepareLoggedUser('patryk', 'me', 'protectedSocket'),
+  ]).then(users.unpackDataArr)
 
 describe('Protected Socket Namespace lobby:leave', () => {
   const server = buildTestServer()
   let users: TestUsers
 
-  let aliceSocket: Socket
-  let aliceData: IUser
-  let patrykSocket: Socket
-  let patrykData: IUser
+  let alice: TestUserMethods<'protectedSocket' | 'me'>
+  let patryk: TestUserMethods<'protectedSocket' | 'me'>
 
   let state: LobbyState<UserID, IUser>
   let lobbyId: LobbyState<UserID, IUser>['id']
@@ -20,53 +29,47 @@ describe('Protected Socket Namespace lobby:leave', () => {
     await server.init()
     users = new TestUsers(server.url)
 
-    const [alice, patryk] = await Promise.all([
-      users.getLoggedUser('alice'),
-      users.getLoggedUser('patryk'),
-    ])
-
-    aliceData = (await alice.me()).body.data
-    patrykData = (await patryk.me()).body.data
-
-    aliceSocket = await alice.connectProtectedSocket()
-    patrykSocket = await patryk.connectProtectedSocket()
+    await prepareUsers(users).then(([alice_, patryk_]) => {
+      alice = alice_
+      patryk = patryk_
+    })
 
     state = await new Promise(resolve => {
-      aliceSocket.once('lobby:state', resolve)
-      aliceSocket.emit('lobby:create')
+      alice.protectedSocket.once('lobby:state', resolve)
+      alice.protectedSocket.emit('lobby:create')
     })
     lobbyId = state.id
 
     state = await new Promise(resolve => {
-      patrykSocket.once('lobby:state', resolve)
-      patrykSocket.emit('lobby:join', state.id)
+      patryk.protectedSocket.once('lobby:state', resolve)
+      patryk.protectedSocket.emit('lobby:join', state.id)
     })
   })
 
   afterAll(async () => {
     await server.close()
-    aliceSocket.disconnect()
-    patrykSocket.disconnect()
+    alice.protectedSocket.disconnect()
+    patryk.protectedSocket.disconnect()
   })
 
   it('should remove user from the lobby', async () => {
     state = await new Promise(resolve => {
-      aliceSocket.once('lobby:state', resolve)
-      aliceSocket.once('lobby:error', resolve)
-      aliceSocket.once('lobby:closed', resolve)
+      alice.protectedSocket.once('lobby:state', resolve)
+      alice.protectedSocket.once('lobby:error', resolve)
+      alice.protectedSocket.once('lobby:closed', resolve)
 
-      patrykSocket.emit('lobby:leave')
+      patryk.protectedSocket.emit('lobby:leave')
     })
 
     expect(state).toEqual({
       id: lobbyId,
-      ownerId: aliceData.id,
+      ownerId: alice.me.id,
       status: 'open',
       maxMembers: 4,
       currentMemberCount: 1,
       members: {
-        [aliceData.id]: {
-          user: { id: aliceData.id, username: aliceData.username },
+        [alice.me.id]: {
+          user: { id: alice.me.id, username: alice.me.username },
           status: 'not-ready',
         },
       },
@@ -75,24 +78,24 @@ describe('Protected Socket Namespace lobby:leave', () => {
 
   it('should transfer ownership after owner leaves', async () => {
     await new Promise(resolve => {
-      patrykSocket.once('lobby:state', resolve)
-      patrykSocket.emit('lobby:join', lobbyId)
+      patryk.protectedSocket.once('lobby:state', resolve)
+      patryk.protectedSocket.emit('lobby:join', lobbyId)
     })
 
     const state: LobbyState<UserID, IUser> = await new Promise(resolve => {
-      patrykSocket.once('lobby:state', resolve)
-      aliceSocket.emit('lobby:leave')
+      patryk.protectedSocket.once('lobby:state', resolve)
+      alice.protectedSocket.emit('lobby:leave')
     })
 
     expect(state).toEqual({
       id: lobbyId,
-      ownerId: patrykData.id,
+      ownerId: patryk.me.id,
       status: 'open',
       maxMembers: 4,
       currentMemberCount: 1,
       members: {
-        [patrykData.id]: {
-          user: { id: patrykData.id, username: patrykData.username },
+        [patryk.me.id]: {
+          user: { id: patryk.me.id, username: patryk.me.username },
           status: 'not-ready',
         },
       },
@@ -102,8 +105,8 @@ describe('Protected Socket Namespace lobby:leave', () => {
   it('should respond with lobby:error when user is not a lobby member', async () => {
     // user tries to join, gets lobby:error
     const error = await new Promise<string>(resolve => {
-      aliceSocket.once('lobby:error', resolve)
-      aliceSocket.emit('lobby:leave', lobbyId)
+      alice.protectedSocket.once('lobby:error', resolve)
+      alice.protectedSocket.emit('lobby:leave', lobbyId)
     })
 
     expect(error).toBe(`User is not a lobby member`)
@@ -111,12 +114,12 @@ describe('Protected Socket Namespace lobby:leave', () => {
 
   it('should dissolve lobby after last member leaves', async () => {
     // Last member leaves, lobby is destroyed
-    patrykSocket.emit('lobby:leave')
+    patryk.protectedSocket.emit('lobby:leave')
 
     // Another user tries to join, gets lobby:error
     const error = await new Promise<string>(resolve => {
-      aliceSocket.once('lobby:error', resolve)
-      aliceSocket.emit('lobby:join', lobbyId)
+      alice.protectedSocket.once('lobby:error', resolve)
+      alice.protectedSocket.emit('lobby:join', lobbyId)
     })
 
     expect(error).toBe(`Lobby with id: ${lobbyId}, is not available`)

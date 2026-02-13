@@ -1,49 +1,76 @@
 import MESSAGES from '@greater-io/server/src/CONSTS/MESSAGES.json'
-import request from 'supertest'
-import { buildTestServer, createExpectRes, TestUser } from '../../utils'
+import {
+  buildTestServer,
+  createExpectRes,
+  TestUser,
+  TestUsers,
+  type AssertSuperResSuccess,
+} from '../../utils'
 
 const expectLogin = createExpectRes<[200, 401]>(MESSAGES.auth.login)
 
 describe('POST /auth/login', () => {
   const server = buildTestServer()
-  let agent!: TestUser
-  let res: request.Response
+  let users: TestUsers
 
   beforeAll(async () => {
     await server.init()
-    agent = new TestUser(server.url)
-    res = await agent.login()
+    users = new TestUsers(server.url)
   })
 
   afterAll(async () => {
     await server.close()
   })
 
-  it('should reject with invalid credentials', async () => {
-    const response = await request(server.url)
-      .post('/auth/login')
-      .send({ username: 'alice', password: 'wrong' })
-      .set('Accept', 'application/json')
+  describe('Valid Credentials', () => {
+    let agent: TestUser
+    let res: AssertSuperResSuccess<TestUser['login']>
 
-    expectLogin(response).fail(401).and.haveMessage()
+    beforeAll(async () => {
+      agent = users.getUser('patryk')
+
+      res = (await agent.login()) as AssertSuperResSuccess<TestUser['login']>
+    })
+
+    // eslint-disable-next-line jest/expect-expect
+    it('should respond with success', () => {
+      expectLogin(res).success(200).and.haveMessage()
+    })
+
+    it('should respond with valid auth data', () => {
+      const { auth } = res.body.data
+
+      expect(auth).toEqual({
+        token: expect.any(String) as string,
+        expiresIn: expect.any(Number) as number,
+        expiresAt: expect.any(Number) as number,
+      })
+    })
   })
 
-  it('should respond with success', async () => {
-    expectLogin(res).success(200).and.haveMessage()
-  })
+  describe('Invalid Credentials', () => {
+    // eslint-disable-next-line jest/expect-expect
+    it('should reject with wrong password', async () => {
+      const agent = users.getUser('wrong-password')
+      const response = await agent.login()
 
-  it('should respond with valid auth data', async () => {
-    const { auth } = res.body.data
+      expectLogin(response).fail(401).and.haveMessage()
+    })
 
-    expect(auth).toHaveProperty('token')
-    expect(auth).toHaveProperty('expiresIn')
-    expect(auth).toHaveProperty('expiresAt')
-  })
+    // eslint-disable-next-line jest/expect-expect
+    it('should reject with empty credentials', async () => {
+      const agent = users.getUser('empty')
+      const response = await agent.login()
 
-  it('should not have any secret data', () => {
-    const { user } = res.body.data
+      expectLogin(response).fail(401).and.haveMessage()
+    })
 
-    expect(user).not.toHaveProperty('password')
-    expect(user).not.toHaveProperty('tokenVersion')
+    // eslint-disable-next-line jest/expect-expect
+    it('should reject with credentials of not existing user', async () => {
+      const agent = users.getUser('non-existing')
+      const response = await agent.login()
+
+      expectLogin(response).fail(401).and.haveMessage()
+    })
   })
 })

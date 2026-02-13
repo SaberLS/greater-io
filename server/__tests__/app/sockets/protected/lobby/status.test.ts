@@ -1,88 +1,90 @@
-import type { Socket } from 'socket.io-client'
-import type { IUser } from '../../../../../src/models'
 import type {
   LobbyState,
   LobbyUser,
   LobbyUserID,
 } from '../../../../../src/services'
-import { buildTestServer, once, TestUsers } from '../../../../utils'
+import {
+  buildTestServer,
+  once,
+  TestUsers,
+  type TestUserMethods,
+} from '../../../../utils'
+
+const prepareUsers = (
+  users: TestUsers
+): Promise<TestUserMethods<'protectedSocket' | 'me'>[]> =>
+  Promise.all([
+    users.prepareLoggedUser('alice', 'me', 'protectedSocket'),
+    users.prepareLoggedUser('patryk', 'me', 'protectedSocket'),
+  ]).then(users.unpackDataArr)
 
 describe('Protected Socket Namespace lobby:status', () => {
   const server = buildTestServer()
 
   let users: TestUsers
-
-  let aliceSocket: Socket
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let aliceData: IUser
-  let patrykSocket: Socket
-  let patrykData: IUser
+  let alice: TestUserMethods<'protectedSocket' | 'me'>
+  let patryk: TestUserMethods<'protectedSocket' | 'me'>
 
   beforeAll(async () => {
     await server.init()
     users = new TestUsers(server.url)
 
-    const [alice, patryk] = await Promise.all([
-      users.getLoggedUser('alice'),
-      users.getLoggedUser('patryk'),
-    ])
-
-    await Promise.all([alice.me(), patryk.me()]).then(([a, p]) => {
-      aliceData = a.body.data
-      patrykData = p.body.data
-    })
-
-    await Promise.all([
-      alice.connectProtectedSocket(),
-      patryk.connectProtectedSocket(),
-    ]).then(([a, p]) => {
-      aliceSocket = a
-      patrykSocket = p
+    await prepareUsers(users).then(([alice_, patryk_]) => {
+      alice = alice_
+      patryk = patryk_
     })
   })
 
   afterAll(async () => {
     await server.close()
 
-    aliceSocket.disconnect()
-    patrykSocket.disconnect()
+    alice.protectedSocket.disconnect()
+    patryk.protectedSocket.disconnect()
   })
 
   it('updates member status and emits lobby state', async () => {
     // Alice creates lobby
-    aliceSocket.emit('lobby:create')
+    alice.protectedSocket.emit('lobby:create')
     const lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      aliceSocket,
+      alice.protectedSocket,
       'lobby:state'
     )
 
     // Patryk joins
-    patrykSocket.emit('lobby:join', lobbyState.id)
-    await once<LobbyState<LobbyUserID, LobbyUser>>(aliceSocket, 'lobby:state')
-
-    // Patryk changes status
-    patrykSocket.emit('lobby:status', 'ready')
-
-    const updatedState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      aliceSocket,
+    patryk.protectedSocket.emit('lobby:join', lobbyState.id)
+    await once<LobbyState<LobbyUserID, LobbyUser>>(
+      alice.protectedSocket,
       'lobby:state'
     )
-    expect(updatedState.members[patrykData.id].status).toBe('ready')
+
+    // Patryk changes status
+    patryk.protectedSocket.emit('lobby:status', 'ready')
+    const updatedState = await once<LobbyState<LobbyUserID, LobbyUser>>(
+      alice.protectedSocket,
+      'lobby:state'
+    )
+    expect(updatedState.members[patryk.me.id].status).toBe('ready')
   })
 
   it('rejects invalid member status', async () => {
-    aliceSocket.emit('lobby:status', 'INVALID_STATUS')
+    alice.protectedSocket.emit('lobby:status', 'INVALID_STATUS')
 
-    const error = await once<string>(aliceSocket, 'lobby:error')
+    const error = await once<string>(alice.protectedSocket, 'lobby:error')
     expect(error).toMatch(/not valid member status/i)
   })
 
   it('broadcasts updated state to all lobby members', async () => {
-    patrykSocket.emit('lobby:status', 'not-ready')
+    patryk.protectedSocket.emit('lobby:status', 'not-ready')
 
     const [aliceState, patrykState] = await Promise.all([
-      once<LobbyState<LobbyUserID, LobbyUser>>(aliceSocket, 'lobby:state'),
-      once<LobbyState<LobbyUserID, LobbyUser>>(patrykSocket, 'lobby:state'),
+      once<LobbyState<LobbyUserID, LobbyUser>>(
+        alice.protectedSocket,
+        'lobby:state'
+      ),
+      once<LobbyState<LobbyUserID, LobbyUser>>(
+        patryk.protectedSocket,
+        'lobby:state'
+      ),
     ])
 
     expect(aliceState).toEqual(patrykState)

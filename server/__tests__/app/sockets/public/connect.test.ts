@@ -15,12 +15,14 @@ describe('Public Socket Namespace', () => {
   })
 
   it('public socket responds to ping', async () => {
-    const socket = await user.connectPublicSocket()
+    const socket = await user.publicSocket()
 
-    await new Promise<void>(resolve => {
-      socket.once('public-pong', () => resolve())
-      socket.emit('ping')
-    })
+    expect(
+      await new Promise<string>(resolve => {
+        socket.once('public-pong', () => resolve('public-pong'))
+        socket.emit('ping')
+      })
+    ).toBe('public-pong')
 
     socket.disconnect()
   })
