@@ -1,7 +1,11 @@
 import type { IApiResponse, IApiSuccess } from '../../../../src/models'
 import { isSupertestResponse } from '../../isSupertestResponse'
-import type { AssertSuccessInRes, AsyncMethods } from '../../types'
-import type { SuperResponse, TestUser } from './TestUser'
+import type {
+  AssertSuccessInRes,
+  AsyncMethods,
+  SuperResponse,
+} from '../../types'
+import type { TestUser } from './TestUser'
 
 async function buildTestUser<
   TUser extends TestUser,
