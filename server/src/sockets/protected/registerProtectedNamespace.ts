@@ -1,15 +1,14 @@
-import type { Namespace } from 'socket.io'
-import type {
-  IoAuthenticatedNamespace,
-  IoAuthenticatedSocket,
-} from '../../types/AuthSocket'
-
 import { parseError } from '@greater-io/shared'
+import type { Namespace } from 'socket.io'
+import { Lobby, LobbyMember } from '../../services'
+import type { ILobbyManager } from '../../services/Lobby/'
+import { LobbyManager } from '../../services/Lobby/LobbyManager'
+import { LobbyStore } from '../../services/Lobby/LobbyStore'
 import type {
-  ILobbyManager,
   LobbyID,
   LobbyMemberState,
   LobbyMemberStatus,
+  LobbyMemberT,
   LobbyState,
   LobbyStatus,
   LobbyStoreT,
@@ -17,10 +16,11 @@ import type {
   LobbyUser,
   LobbyUserID,
   LobbyUserState,
-} from '../../services'
-import { Lobby } from '../../services'
-import { LobbyManager } from '../../services/Lobby/LobbyManager'
-import { LobbyStore } from '../../services/Lobby/LobbyStore'
+} from '../../services/Lobby/types'
+import type {
+  IoAuthenticatedNamespace,
+  IoAuthenticatedSocket,
+} from '../../types/AuthSocket'
 import { socketJwtAuth } from './socketJWTAuth'
 
 function registerProtectedNamespace(
@@ -30,41 +30,47 @@ function registerProtectedNamespace(
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const protectedNs = namespace.use(socketJwtAuth) as IoAuthenticatedNamespace
 
+  const createMember = (user: LobbyUser): LobbyMemberT => new LobbyMember(user)
+  const createLobby = (user: LobbyUser): LobbyT =>
+    new Lobby(crypto.randomUUID(), user, createMember)
+
   const lobbyManager: ILobbyManager<
     LobbyID,
     LobbyUserID,
     LobbyUser,
-    LobbyState<LobbyUserID, LobbyUser>,
-    LobbyMemberStatus
+    LobbyUserState,
+    LobbyMemberStatus,
+    LobbyMemberState,
+    LobbyMemberT,
+    LobbyStatus,
+    LobbyState
   > = new LobbyManager<
     LobbyID,
     LobbyUserID,
     LobbyUser,
-    LobbyUserState<LobbyUserID, LobbyUser>,
-    LobbyState<LobbyUserID, LobbyUser>,
+    LobbyUserState,
+    LobbyMemberStatus,
+    LobbyMemberState,
+    LobbyMemberT,
     LobbyStatus,
-    // LobbyMemberStatus,
-    LobbyMemberState<LobbyUserID, LobbyUser>,
-    LobbyT<LobbyUserID, LobbyUser>,
-    LobbyStoreT<LobbyUserID, LobbyUser>
-  >(Lobby, new LobbyStore())
+    LobbyState,
+    LobbyT,
+    LobbyStoreT
+  >(createLobby, new LobbyStore())
 
   // check if user exists and if user is already connected
   protectedNs.use((socket: IoAuthenticatedSocket, next) => {
     const { user } = socket.data
 
     if (!user) return next(new Error('Unauthorized'))
-
     if (user.socketId) return next(new Error('User already connected'))
 
     user.socketId = socket.id
     next()
   })
 
-  const emitLobbyState = (
-    lobby: LobbyState<LobbyUserID, LobbyUser>,
-    room = `lobby:${lobby.id}`
-  ) => protectedNs.to(room).emit('lobby:state', lobby)
+  const emitLobbyState = (lobby: LobbyState, room = `lobby:${lobby.id}`) =>
+    protectedNs.to(room).emit('lobby:state', lobby)
 
   protectedNs.on('connection', socket => {
     const { user } = socket.data
@@ -74,12 +80,9 @@ function registerProtectedNamespace(
     })
 
     const listenerHandler = <TArgs extends unknown[]>(
-      // TODO: add validation like validate: (...args: unknown[]) => TArgs,
       listener: (
         ...args: TArgs
-      ) =>
-        | (LobbyState<LobbyUserID, LobbyUser> | void)
-        | Promise<LobbyState<LobbyUserID, LobbyUser> | void>,
+      ) => (LobbyState | void) | Promise<LobbyState | void>,
       options?: Partial<{
         emitError: boolean
         emitState: boolean
@@ -91,8 +94,10 @@ function registerProtectedNamespace(
         ...options,
       }
 
-      return async (...args: Partial<TArgs> | unknown[]) => {
+      return async (...args: Partial<TArgs>) => {
         try {
+          // TODO: add validation like validate: (...args: unknown[]) => TArgs
+          // @ts-expect-error
           const lobby = await listener(...args)
 
           if (opt.emitState && lobby) emitLobbyState(lobby)
@@ -163,22 +168,22 @@ function registerProtectedNamespace(
     socket.on('lobby:start', async () => {
       try {
         await lobbyManager.start(user, {
-          onStart(lobby: LobbyState<LobbyUserID, LobbyUser>) {
+          onStart(lobby: LobbyState) {
             protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:start')
 
             emitLobbyState(lobby)
           },
-          onTick(count: number, lobby: LobbyState<LobbyUserID, LobbyUser>) {
+          onTick(count: number, lobby: LobbyState) {
             protectedNs
               .to(`lobby:${lobby.id}`)
               .emit('lobby:start:count:tick', 10 - count)
           },
-          onEnd(lobby: LobbyState<LobbyUserID, LobbyUser>) {
+          onEnd(lobby: LobbyState) {
             protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:end')
 
             emitLobbyState(lobby)
           },
-          onAbort(lobby: LobbyState<LobbyUserID, LobbyUser>, reason: string) {
+          onAbort(lobby: LobbyState, reason: string) {
             socket.emit('lobby:start:abort', reason)
 
             emitLobbyState(lobby)

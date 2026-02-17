@@ -1,10 +1,5 @@
 import { parseError } from '@greater-io/shared'
-import type { IUser, UserID } from '../../../../../src/models'
-import type {
-  LobbyState,
-  LobbyUser,
-  LobbyUserID,
-} from '../../../../../src/services'
+import type { LobbyState } from '../../../../../src/services'
 import {
   buildTestServer,
   once,
@@ -16,7 +11,7 @@ import { expectLobbyId } from '../../../../utils/matchers/randomUUIDRegex'
 describe('Protected Socket Namespace lobby:start', () => {
   const server = buildTestServer()
 
-  let lobbyState: LobbyState<UserID, IUser>
+  let lobbyState: LobbyState
   let owner: TestUserMethods<'protectedSocket' | 'me'>
   let member: TestUserMethods<'protectedSocket' | 'me'>
 
@@ -37,16 +32,10 @@ describe('Protected Socket Namespace lobby:start', () => {
       })
 
     owner.protectedSocket.emit('lobby:create')
-    lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      owner.protectedSocket,
-      'lobby:state'
-    )
+    lobbyState = await once<LobbyState>(owner.protectedSocket, 'lobby:state')
 
     member.protectedSocket.emit('lobby:join', lobbyState.id)
-    lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      member.protectedSocket,
-      'lobby:state'
-    )
+    lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
   })
 
   afterAll(async () => {
@@ -81,10 +70,7 @@ describe('Protected Socket Namespace lobby:start', () => {
 
   it('should start lobby countdown and emit events', async () => {
     member.protectedSocket.emit('lobby:status', 'ready')
-    lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      member.protectedSocket,
-      'lobby:state'
-    )
+    lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
 
     const events: (number | string)[] = []
     const expectedEvents = ['start', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 'end']
@@ -104,16 +90,10 @@ describe('Protected Socket Namespace lobby:start', () => {
 
     // start lobby
     owner.protectedSocket.emit('lobby:start')
-    lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      member.protectedSocket,
-      'lobby:state'
-    )
+    lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
 
     // end countdown
-    lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
-      member.protectedSocket,
-      'lobby:state'
-    )
+    lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
 
     expect(events).toEqual(expectedEvents)
 
@@ -133,6 +113,6 @@ describe('Protected Socket Namespace lobby:start', () => {
           status: 'ready',
         },
       },
-    } as LobbyState<UserID, LobbyUser>)
+    } satisfies LobbyState)
   }, 15_000)
 })

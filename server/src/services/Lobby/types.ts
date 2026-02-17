@@ -1,86 +1,68 @@
-import type { ISocketUser, UserID } from '../../models'
+import type { ISocketUser } from '../../models'
 import type { ILobby, ILobbyState, ILobbyUserState } from './Lobby'
-import type { ILobbyMember, ILobbyMemberState, ILobbyUser } from './LobbyMember'
+import type { ILobbyMember, ILobbyMemberState } from './LobbyMember'
 import type { ILobbyStore } from './LobbyStore'
 
 type LobbyID = ReturnType<typeof crypto.randomUUID>
-type LobbyUserID = UserID
+type LobbyUserID = ISocketUser['id']
 type LobbyUser = ISocketUser
 
-type LobbyUserState<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> = ILobbyUserState<TUserID, TUser>
+type LobbyUserState = ILobbyUserState<LobbyUserID, LobbyUser>
 
-// interface LobbyPlayerResult extends IPlayerResult {}
 type LobbyMemberStatus = 'ready' | 'in-game' | 'not-ready'
-
-type LobbyMemberState<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> = ILobbyMemberState<
-  TUserID,
-  LobbyUserState<TUserID, TUser>,
+type LobbyMemberState = ILobbyMemberState<
+  LobbyUserID,
+  LobbyUserState,
   LobbyMemberStatus
 >
 
-type LobbyMemberT<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> = ILobbyMember<
-  TUserID,
-  TUser,
+type LobbyMemberT = ILobbyMember<
+  LobbyUserID,
+  LobbyUser,
+  LobbyUserState,
   LobbyMemberStatus,
-  LobbyMemberState<TUserID, TUser>
+  LobbyMemberState
 >
 
 type LobbyStatus = 'open' | 'closed' | 'game-in-progress' | 'starting'
 
-type LobbyState<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> = ILobbyState<
+type LobbyState = ILobbyState<
   LobbyID,
-  TUserID,
-  ILobbyUser<TUserID>,
-  LobbyUserState<TUserID, TUser>,
+  LobbyUserID,
+  LobbyUser,
+  LobbyUserState,
   LobbyMemberStatus,
-  LobbyMemberState<TUserID, TUser>,
+  LobbyMemberState,
   LobbyStatus
 >
 
-type LobbyT<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> = ILobby<
+type LobbyT = ILobby<
   LobbyID,
-  TUserID,
-  TUser,
-  LobbyUserState<TUserID, TUser>,
-  LobbyStatus,
-  LobbyState<TUserID, TUser>,
+  LobbyUserID,
+  LobbyUser,
+  LobbyUserState,
   LobbyMemberStatus,
-  LobbyMemberState<TUserID, TUser>
+  LobbyMemberState,
+  LobbyMemberT,
+  LobbyStatus,
+  LobbyState
 >
 
-type LobbyStoreT<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> = ILobbyStore<
+type LobbyStoreT = ILobbyStore<
   LobbyID,
-  TUserID,
-  TUser,
-  LobbyUserState<TUserID, TUser>,
-  LobbyStatus,
-  LobbyState<TUserID, TUser>,
+  LobbyUserID,
+  LobbyUser,
+  LobbyUserState,
   LobbyMemberStatus,
-  LobbyMemberState<TUserID, TUser>,
-  LobbyT<TUserID, TUser>
+  LobbyMemberState,
+  LobbyMemberT,
+  LobbyStatus,
+  LobbyState,
+  LobbyT
 >
 
 export type {
   LobbyID,
-  // LobbyPlayerResult,
   LobbyMemberState,
   LobbyMemberStatus,
   LobbyMemberT,

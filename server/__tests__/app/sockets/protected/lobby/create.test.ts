@@ -1,5 +1,4 @@
-import type { IUser, UserID } from '../../../../../src/models'
-import type { LobbyState, LobbyUser } from '../../../../../src/services'
+import type { LobbyState } from '../../../../../src/services'
 import {
   buildTestServer,
   TestUsers,
@@ -29,9 +28,7 @@ describe('Protected Socket Namespace lobby:create', () => {
 
   it('should create a lobby successfully', async () => {
     // Listen for the lobby state after creation
-    const state: LobbyState<UserID, IUser> = await new Promise<
-      LobbyState<UserID, IUser>
-    >(resolve => {
+    const state: LobbyState = await new Promise<LobbyState>(resolve => {
       alice.protectedSocket.once('lobby:state', resolve)
       alice.protectedSocket.emit('lobby:create')
     })
@@ -49,7 +46,7 @@ describe('Protected Socket Namespace lobby:create', () => {
           status: 'not-ready',
         },
       },
-    } as LobbyState<UserID, LobbyUser>)
+    } satisfies LobbyState)
 
     alice.protectedSocket.disconnect()
   })

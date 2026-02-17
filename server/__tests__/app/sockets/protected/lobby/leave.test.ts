@@ -1,6 +1,4 @@
-import type { IUser, UserID } from '../../../../../src/models'
-
-import type { LobbyState, LobbyUser } from '../../../../../src/services'
+import type { LobbyState } from '../../../../../src/services'
 import {
   buildTestServer,
   TestUsers,
@@ -22,8 +20,8 @@ describe('Protected Socket Namespace lobby:leave', () => {
   let alice: TestUserMethods<'protectedSocket' | 'me'>
   let patryk: TestUserMethods<'protectedSocket' | 'me'>
 
-  let state: LobbyState<UserID, IUser>
-  let lobbyId: LobbyState<UserID, IUser>['id']
+  let state: LobbyState
+  let lobbyId: LobbyState['id']
 
   beforeAll(async () => {
     await server.init()
@@ -73,7 +71,7 @@ describe('Protected Socket Namespace lobby:leave', () => {
           status: 'not-ready',
         },
       },
-    } as LobbyState<UserID, LobbyUser>)
+    } as LobbyState)
   })
 
   it('should transfer ownership after owner leaves', async () => {
@@ -82,7 +80,7 @@ describe('Protected Socket Namespace lobby:leave', () => {
       patryk.protectedSocket.emit('lobby:join', lobbyId)
     })
 
-    const state: LobbyState<UserID, IUser> = await new Promise(resolve => {
+    const state: LobbyState = await new Promise(resolve => {
       patryk.protectedSocket.once('lobby:state', resolve)
       alice.protectedSocket.emit('lobby:leave')
     })
@@ -99,7 +97,7 @@ describe('Protected Socket Namespace lobby:leave', () => {
           status: 'not-ready',
         },
       },
-    } as LobbyState<UserID, LobbyUser>)
+    } satisfies LobbyState)
   })
 
   it('should respond with lobby:error when user is not a lobby member', async () => {

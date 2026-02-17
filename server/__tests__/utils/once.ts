@@ -5,7 +5,7 @@ function once<T = unknown>(
   event: string,
   trigger?: () => void
 ): Promise<T> {
-  return new Promise(resolve => {
+  return new Promise<T>(resolve => {
     socket.once(event, resolve)
     trigger?.()
   })

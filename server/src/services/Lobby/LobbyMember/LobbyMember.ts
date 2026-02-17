@@ -1,5 +1,10 @@
-import type { LobbyMemberState, LobbyMemberStatus } from '../types'
-import type { ILobbyMember, ILobbyUser } from './ILobbyMember'
+import type { ILobbyUserState } from '../Lobby/ILobby'
+import type { LobbyMemberStatus } from '../types'
+import type {
+  ILobbyMember,
+  ILobbyMemberState,
+  ILobbyUser,
+} from './ILobbyMember'
 
 class LobbyMember<
   TUserID extends PropertyKey,
@@ -7,8 +12,9 @@ class LobbyMember<
 > implements ILobbyMember<
   TUserID,
   TUser,
+  ILobbyUserState<TUserID, TUser>,
   LobbyMemberStatus,
-  LobbyMemberState<TUserID, TUser>
+  ILobbyMemberState<TUserID, ILobbyUserState<TUserID, TUser>, LobbyMemberStatus>
 > {
   #user: TUser
   #status: LobbyMemberStatus
@@ -23,13 +29,10 @@ class LobbyMember<
   }
 
   get state() {
-    const s = {
+    return Object.freeze({
       user: { id: this.user.id, username: this.user.username },
       status: this.status,
-    }
-    Object.freeze(s)
-
-    return s
+    })
   }
 
   get status() {

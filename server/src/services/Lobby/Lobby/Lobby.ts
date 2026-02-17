@@ -5,48 +5,69 @@ import {
   type Callbacks,
   type TypedController,
 } from '../../../utils'
-import { LobbyMember, type ILobbyUser } from '../LobbyMember'
-import type {
-  LobbyID,
-  LobbyMemberState,
-  LobbyMemberStatus,
-  LobbyMemberT,
-  LobbyState,
-  LobbyStatus,
-  LobbyUserState,
-} from '../types'
-import type { ILobby } from './ILobby'
+import {
+  type ILobbyMember,
+  type ILobbyMemberState,
+  type ILobbyUser,
+} from '../LobbyMember'
+import type { LobbyStatus } from '../types'
+import type { ILobby, ILobbyState, ILobbyUserState } from './ILobby'
 
 class Lobby<
+  TLobbyID extends PropertyKey,
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
+  TUserState extends ILobbyUserState<TUserID>,
+  TMemberStatus,
+  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
+  TMember extends ILobbyMember<
+    TUserID,
+    TUser,
+    TUserState,
+    TMemberStatus,
+    TMemberState
+  >,
 > implements ILobby<
-  LobbyID,
+  TLobbyID,
   TUserID,
   TUser,
-  LobbyUserState<TUserID, TUser>,
+  TUserState,
+  TMemberStatus,
+  TMemberState,
+  TMember,
   LobbyStatus,
-  LobbyState<TUserID, TUser>,
-  LobbyMemberStatus,
-  LobbyMemberState<TUserID, TUser>
+  ILobbyState<
+    TLobbyID,
+    TUser,
+    TUserState,
+    TMemberStatus,
+    TMemberState,
+    LobbyStatus,
+    TUserID
+  >
 > {
-  #id: LobbyID
+  #id: TLobbyID
   #owner?: TUser
-  readonly #members = new Map<TUserID, LobbyMemberT<TUserID, TUser>>()
+  readonly #members = new Map<TUserID, TMember>()
   #status: LobbyStatus
   #maxMembers: number
   #counter = new AsyncCounter<string>(ms('1s'), 10)
   #controller?: TypedController<string>
 
-  private readonly Member: new (user: TUser) => LobbyMemberT<TUserID, TUser> =
-    LobbyMember<TUserID, TUser>
+  private readonly createMember: (user: TUser) => TMember
 
-  constructor(owner: TUser, maxMembers = 4) {
-    this.#members.set(owner.id, new this.Member(owner))
+  constructor(
+    id: TLobbyID,
+    owner: TUser,
+    createMember: (user: TUser) => TMember,
+    maxMembers = 4
+  ) {
+    this.createMember = createMember
+    this.#members.set(owner.id, this.createMember(owner))
 
-    this.#status = 'open'
-    this.#id = crypto.randomUUID()
     this.#owner = owner
+    this.#status = 'open'
+    this.#id = id
     this.#maxMembers = maxMembers
   }
 
@@ -77,7 +98,7 @@ class Lobby<
     return user.id === this.owner?.id
   }
 
-  private get members() {
+  get members() {
     return this.#members
   }
 
@@ -92,28 +113,23 @@ class Lobby<
       this.owner = this.#members.values().next().value?.user
   }
 
-  get users() {
-    return this.members.keys()
-  }
-
   add(user: TUser) {
-    this.members.set(user.id, new this.Member(user))
+    this.members.set(user.id, this.createMember(user))
   }
 
   hasUser(userId: TUserID) {
     return this.members.has(userId)
   }
 
-  get membersState() {
-    const result = {} as LobbyState<TUserID, TUser>['members']
+  get membersState(): Record<TUserID, TMemberState> {
+    const result = {} as Record<TUserID, TMemberState>
 
-    for (const member of this.#members.values())
-      result[member.user.id] = member.state
+    for (const [id, member] of this.members.entries()) result[id] = member.state
 
     return result
   }
 
-  get state(): LobbyState<TUserID, TUser> {
+  get state() {
     return Object.freeze({
       id: this.id,
       ownerId: this.owner?.id,
@@ -129,10 +145,10 @@ class Lobby<
     this.#status = 'game-in-progress'
 
     // TODO: Ideally members shouldn't have manually set status, it should be recognized by the current Lobby or Game status user participates. this change requiers additional property like ready: boolean, because it can only be set manually by user action.
-    for (const member of this.members.values()) member.status = 'in-game'
+    // for (const member of this.members.values()) member.status = 'in-game'
   }
 
-  changeUserStatus(userId: TUserID, status: LobbyMemberStatus): void {
+  changeUserStatus(userId: TUserID, status: TMemberStatus): void {
     const member = this.members.get(userId)
 
     if (member) member.status = status
@@ -147,7 +163,7 @@ class Lobby<
     return this.#maxMembers
   }
 
-  get id(): LobbyID {
+  get id(): TLobbyID {
     return this.#id
   }
 

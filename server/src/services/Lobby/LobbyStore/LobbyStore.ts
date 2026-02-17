@@ -1,48 +1,56 @@
 import type { ILobby, ILobbyState, ILobbyUserState } from '../Lobby'
-import type { ILobbyMemberState, ILobbyUser } from '../LobbyMember'
+import type {
+  ILobbyMember,
+  ILobbyMemberState,
+  ILobbyUser,
+} from '../LobbyMember'
 import type { ILobbyStore } from './ILobbyStore'
 
 class LobbyStore<
   TLobbyID extends PropertyKey,
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
-  TLobbyUserState extends ILobbyUserState<TUserID, TUser>,
+  TUserState extends ILobbyUserState<TUserID, TUser>,
+  TMemberStatus,
+  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
+  TMember extends ILobbyMember<
+    TUserID,
+    TUser,
+    TUserState,
+    TMemberStatus,
+    TMemberState
+  >,
+  TLobbyStatus,
   TLobbyState extends ILobbyState<
     TLobbyID,
     TUserID,
     TUser,
-    TLobbyUserState,
-    TLobbyMemberStatus,
-    TLobbyMemberState,
+    TUserState,
+    TMemberStatus,
+    TMemberState,
     TLobbyStatus
-  >,
-  // ---
-  TLobbyStatus,
-  TLobbyMemberStatus,
-  TLobbyMemberState extends ILobbyMemberState<
-    TUserID,
-    TLobbyUserState,
-    TLobbyMemberStatus
   >,
   TLobby extends ILobby<
     TLobbyID,
     TUserID,
     TUser,
-    TLobbyUserState,
+    TUserState,
+    TMemberStatus,
+    TMemberState,
+    TMember,
     TLobbyStatus,
-    TLobbyState,
-    TLobbyMemberStatus,
-    TLobbyMemberState
+    TLobbyState
   >,
 > implements ILobbyStore<
   TLobbyID,
   TUserID,
   TUser,
-  TLobbyUserState,
+  TUserState,
+  TMemberStatus,
+  TMemberState,
+  TMember,
   TLobbyStatus,
   TLobbyState,
-  TLobbyMemberStatus,
-  TLobbyMemberState,
   TLobby
 > {
   readonly #userToLobby = new Map<TUserID, TLobby>()

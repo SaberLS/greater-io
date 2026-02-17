@@ -1,64 +1,71 @@
 import type { ILobbyManager } from './ILobbyManager'
 import type { ILobby, ILobbyState, ILobbyUserState } from './Lobby/ILobby'
-import type { ILobbyMemberState, ILobbyUser } from './LobbyMember'
+import type { ILobbyMember, ILobbyMemberState, ILobbyUser } from './LobbyMember'
 import type { ILobbyStore } from './LobbyStore'
-import type { LobbyMemberStatus } from './types'
 
 // TODO: All methods which take an user input unknown type and be casted to desired type by some Validator
 class LobbyManager<
   TLobbyID extends PropertyKey,
   TUserID extends PropertyKey,
   TUser extends ILobbyUser<TUserID>,
-  TLobbyUserState extends ILobbyUserState<TUserID, TUser>,
+  TUserState extends ILobbyUserState<TUserID, TUser>,
+  TMemberStatus,
+  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
+  TMember extends ILobbyMember<
+    TUserID,
+    TUser,
+    TUserState,
+    TMemberStatus,
+    TMemberState
+  >,
+  TLobbyStatus,
   TLobbyState extends ILobbyState<
     TLobbyID,
     TUserID,
     TUser,
-    TLobbyUserState,
-    LobbyMemberStatus,
-    TLobbyMemberState,
+    TUserState,
+    TMemberStatus,
+    TMemberState,
     TLobbyStatus
-  >,
-  // ---
-  TLobbyStatus,
-  // TLobbyMemberStatus,
-  TLobbyMemberState extends ILobbyMemberState<
-    TUserID,
-    TLobbyUserState,
-    LobbyMemberStatus
   >,
   TLobby extends ILobby<
     TLobbyID,
     TUserID,
     TUser,
-    TLobbyUserState,
+    TUserState,
+    TMemberStatus,
+    TMemberState,
+    TMember,
     TLobbyStatus,
-    TLobbyState,
-    LobbyMemberStatus,
-    TLobbyMemberState
+    TLobbyState
   >,
   TLobbyStore extends ILobbyStore<
     TLobbyID,
     TUserID,
     TUser,
-    TLobbyUserState,
+    TUserState,
+    TMemberStatus,
+    TMemberState,
+    TMember,
     TLobbyStatus,
     TLobbyState,
-    LobbyMemberStatus,
-    TLobbyMemberState,
     TLobby
   >,
 > implements ILobbyManager<
   TLobbyID,
   TUserID,
   TUser,
-  TLobbyState,
-  LobbyMemberStatus
+  TUserState,
+  TMemberStatus,
+  TMemberState,
+  TMember,
+  TLobbyStatus,
+  TLobbyState
 > {
-  private readonly Lobby: new (user: TUser) => TLobby
+  private readonly Lobby: (user: TUser) => TLobby
   private readonly store: TLobbyStore
 
-  constructor(Lobby: new (user: TUser) => TLobby, store: TLobbyStore) {
+  constructor(Lobby: (user: TUser) => TLobby, store: TLobbyStore) {
     this.Lobby = Lobby
     this.store = store
   }
@@ -66,7 +73,7 @@ class LobbyManager<
   create(user: TUser): TLobbyState {
     if (this.store.hasUser(user.id)) throw new Error('User already in a lobby')
 
-    return this.store.addLobby(user.id, new this.Lobby(user)).state
+    return this.store.addLobby(user.id, this.Lobby(user)).state
   }
 
   leave(user: TUser): TLobbyState {
@@ -109,7 +116,7 @@ class LobbyManager<
 
   // TODO: close shouldn't delete lobby it should only set lobby.status to closed to dissallow new users from joining, delete should be separate method
   private closeLobby(lobby: TLobby) {
-    for (const userId of lobby.users) this.store.deleteUserById(userId)
+    for (const id of lobby.members.keys()) this.store.deleteUserById(id)
 
     lobby.close()
     this.store.deleteLobbyById(lobby.id)
@@ -117,7 +124,7 @@ class LobbyManager<
     return lobby.state
   }
 
-  changeStatus(user: TUser, status: LobbyMemberStatus): TLobbyState {
+  changeStatus(user: TUser, status: TMember['status']): TLobbyState {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (!lobby?.hasUser(user.id)) throw new Error(`User is not a lobby member`)

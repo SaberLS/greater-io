@@ -1,8 +1,4 @@
-import type {
-  LobbyState,
-  LobbyUser,
-  LobbyUserID,
-} from '../../../../../src/services'
+import type { LobbyState } from '../../../../../src/services'
 import {
   buildTestServer,
   once,
@@ -45,21 +41,18 @@ describe('Protected Socket Namespace lobby:status', () => {
   it('updates member status and emits lobby state', async () => {
     // Alice creates lobby
     alice.protectedSocket.emit('lobby:create')
-    const lobbyState = await once<LobbyState<LobbyUserID, LobbyUser>>(
+    const lobbyState = await once<LobbyState>(
       alice.protectedSocket,
       'lobby:state'
     )
 
     // Patryk joins
     patryk.protectedSocket.emit('lobby:join', lobbyState.id)
-    await once<LobbyState<LobbyUserID, LobbyUser>>(
-      alice.protectedSocket,
-      'lobby:state'
-    )
+    await once<LobbyState>(alice.protectedSocket, 'lobby:state')
 
     // Patryk changes status
     patryk.protectedSocket.emit('lobby:status', 'ready')
-    const updatedState = await once<LobbyState<LobbyUserID, LobbyUser>>(
+    const updatedState = await once<LobbyState>(
       alice.protectedSocket,
       'lobby:state'
     )
@@ -77,14 +70,8 @@ describe('Protected Socket Namespace lobby:status', () => {
     patryk.protectedSocket.emit('lobby:status', 'not-ready')
 
     const [aliceState, patrykState] = await Promise.all([
-      once<LobbyState<LobbyUserID, LobbyUser>>(
-        alice.protectedSocket,
-        'lobby:state'
-      ),
-      once<LobbyState<LobbyUserID, LobbyUser>>(
-        patryk.protectedSocket,
-        'lobby:state'
-      ),
+      once<LobbyState>(alice.protectedSocket, 'lobby:state'),
+      once<LobbyState>(patryk.protectedSocket, 'lobby:state'),
     ])
 
     expect(aliceState).toEqual(patrykState)

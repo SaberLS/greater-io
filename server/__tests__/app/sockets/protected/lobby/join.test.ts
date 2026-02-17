@@ -1,9 +1,4 @@
-import type { UserID } from '../../../../../src/models'
-import type {
-  LobbyState,
-  LobbyUser,
-  LobbyUserID,
-} from '../../../../../src/services'
+import type { LobbyState } from '../../../../../src/services'
 import {
   buildTestServer,
   TestUsers,
@@ -37,12 +32,10 @@ describe('Protected Socket Namespace lobby:create', () => {
 
   it('should join a lobby successfully', async () => {
     // Listen for the lobby state after creation
-    const lobby = await new Promise<LobbyState<LobbyUserID, LobbyUser>>(
-      resolve => {
-        alice.protectedSocket.once('lobby:state', resolve)
-        alice.protectedSocket.emit('lobby:create')
-      }
-    )
+    const lobby = await new Promise<LobbyState>(resolve => {
+      alice.protectedSocket.once('lobby:state', resolve)
+      alice.protectedSocket.emit('lobby:create')
+    })
 
     const [aliceState, patrykState] = await Promise.all([
       new Promise(resolve =>
@@ -54,7 +47,7 @@ describe('Protected Socket Namespace lobby:create', () => {
       }),
     ])
 
-    const expectedState: LobbyState<UserID, LobbyUser> = {
+    const expectedState: LobbyState = {
       id: lobby.id,
       ownerId: alice.me.id,
       status: 'open',
