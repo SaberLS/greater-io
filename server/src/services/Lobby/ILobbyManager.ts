@@ -1,48 +1,48 @@
-import type { ILobbyState, ILobbyUserState } from './Lobby'
-import type { ILobbyMember, ILobbyMemberState, ILobbyUser } from './LobbyMember'
+import type { ILobby } from './Lobby'
+import type { ILobbyMember, ILobbyUser } from './LobbyMember'
+import type { Config } from './types'
 
 interface ILobbyManager<
-  TLobbyID extends PropertyKey,
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-  TUserState extends ILobbyUserState<TUserID, TUser>,
-  TMemberStatus,
-  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
-  TMember extends ILobbyMember<
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState
+  T extends Config.LobbyTypes<
+    Config.BASE.LobbyID,
+    Config.BASE.LobbyStatus,
+    Config.Statefull<
+      ILobbyMember<
+        Config.MemberTypes<
+          ILobbyUser<Config.BASE.UserID>,
+          Config.BASE.MemberStatus
+        >
+      >,
+      unknown
+    >
   >,
-  TLobbyStatus,
-  TLobbyState extends ILobbyState<
-    TLobbyID,
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState,
-    TLobbyStatus
-  >,
+  TLobby extends Config.Statefull<ILobby<T>, unknown>,
 > {
-  create(user: TUser): TLobbyState
-  leave(user: TUser): TLobbyState
-  join(user: TUser, lobbyId: TLobbyID): TLobbyState
-  close(lobbyId: TLobbyID): TLobbyState
+  create(user: T['member']['user']): Config.Helpers.StateOf<TLobby>
+  leave(user: T['member']['user']): Config.Helpers.StateOf<TLobby>
+  join(
+    user: T['member']['user'],
+    lobbyId: T['id']
+  ): Config.Helpers.StateOf<TLobby>
+
+  close(lobbyId: T['id']): Config.Helpers.StateOf<TLobby>
+
   start(
-    user: TUser,
+    user: T['member']['user'],
     options?: Partial<{
       countFrom: number
       delay: number
-      onStart: (lobby: TLobbyState) => void
-      onTick: (count: number, lobby: TLobbyState) => void
-      onEnd: (lobby: TLobbyState) => void
-      onAbort: (lobby: TLobbyState, reason: string) => void
+      onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
+      onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
+      onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
+      onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
     }>
-  ): Promise<TLobbyState>
+  ): Promise<Config.Helpers.StateOf<TLobby>>
 
-  changeStatus(user: TUser, status: TMember['status']): TLobbyState
+  changeStatus(
+    user: T['member']['user'],
+    status: T['member']['status']
+  ): Config.Helpers.StateOf<TLobby>
 }
 
 export type { ILobbyManager }

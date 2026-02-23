@@ -1,66 +1,62 @@
 import type { Callbacks } from '../../../utils'
-import type {
-  ILobbyMember,
-  ILobbyMemberState,
-  ILobbyUser,
-} from '../LobbyMember'
+import type { ILobbyMember, ILobbyUser } from '../LobbyMember'
+import type { Config } from '../types'
 
-interface ILobbyUserState<TUserID extends PropertyKey> {
-  id: TUserID
-  username: string
-}
+type LobbyBaseTypes = Config.LobbyTypes<
+  Config.BASE.LobbyID,
+  Config.BASE.LobbyStatus,
+  ILobbyMember<
+    Config.MemberTypes<ILobbyUser<Config.BASE.UserID>, Config.BASE.MemberStatus>
+  >
+>
+type LobbyBaseStatefullTypes = Config.LobbyTypes<
+  Config.BASE.LobbyID,
+  Config.BASE.LobbyStatus,
+  Config.Statefull<
+    ILobbyMember<
+      Config.MemberTypes<
+        ILobbyUser<Config.BASE.UserID>,
+        Config.BASE.MemberStatus
+      >
+    >,
+    Config.BASE.MemberState
+  >
+>
 
-interface ILobby<
-  TLobbyID extends PropertyKey,
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-  TUserState extends ILobbyUserState<TUserID>,
-  TMemberStatus,
-  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
-  TMember extends ILobbyMember<
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState
-  >,
-  TLobbyStatus,
-  TLobbyState extends ILobbyState<
-    TLobbyID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState,
-    TLobbyStatus,
-    TUserID
-  >,
-> {
-  id: TLobbyID
+type TOfLobby<TLobby extends ILobby<LobbyBaseTypes>> =
+  TLobby extends ILobby<infer T> ? T : never
 
-  status: TLobbyStatus
-  maxMembers: number
-
-  state: Readonly<TLobbyState> // optionally include GameState
-  members: Readonly<Map<TUserID, TMember>>
-
-  // game_instance: Game // game object itself
-
-  add(user: TUser): void
-  remove(user: TUser): void
-
-  hasUser(userId: TUserID): boolean
-  isOwner(user: TUser): boolean
+interface ILobby<T extends LobbyBaseTypes> {
+  id: T['id']
+  owner: T['member']['user'] | undefined
+  status: T['status']
   isEmpty: boolean
   isFull: boolean
   isReady: boolean
 
-  changeUserStatus(userId: TUserID, status: TMemberStatus): void
+  counterState: number
+
+  maxMembers: number
+  membersSize: number
+  members: Readonly<Map<T['member']['user']['id'], T['member']>>
+
+  // game_instance: Game // game object itself
+
+  add(user: T['member']['user']): void
+  remove(user: T['member']['user']): void
+
+  hasUser(userId: T['member']['user']['id']): boolean
+  isOwner(user: T['member']['user']): boolean
+
+  changeUserStatus(
+    userId: T['member']['user']['id'],
+    status: T['member']['status']
+  ): void
 
   close(): void
 
   start(callbacks: Partial<Callbacks<string>>): Promise<void>
   abortStart(reason: string): void
-  counterState: number
 }
 
 interface LobbyStartCallbacks<TAbortReason, TLobbyState> {
@@ -70,21 +66,20 @@ interface LobbyStartCallbacks<TAbortReason, TLobbyState> {
   onAbort: (lobby: TLobbyState, reason: TAbortReason) => void
 }
 
-interface ILobbyState<
-  TLobbyID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-  TUserState extends ILobbyUserState<TUserID>,
-  TMemberStatus,
-  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
-  TLobbyStatus,
-  TUserID extends PropertyKey = TUser['id'],
-> {
-  id: TLobbyID
-  ownerId: TUserID | undefined
-  status: TLobbyStatus
+interface ILobbyState<T extends LobbyBaseStatefullTypes> {
+  id: T['id']
+  ownerId: T['member']['user']['id'] | undefined
+  status: T['status']
   maxMembers: number
   currentMemberCount: number
-  members: Readonly<Record<TUserID, TMemberState>>
+  members: Readonly<Record<T['member']['user']['id'], T['member']['state']>>
 }
 
-export type { ILobby, ILobbyState, ILobbyUserState, LobbyStartCallbacks }
+export type {
+  ILobby,
+  ILobbyState,
+  LobbyBaseStatefullTypes,
+  LobbyBaseTypes,
+  LobbyStartCallbacks,
+  TOfLobby,
+}

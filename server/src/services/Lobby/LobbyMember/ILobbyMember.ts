@@ -1,30 +1,27 @@
-import type { ILobbyUserState } from '../Lobby/ILobby'
+import type { Config } from '../types'
 
-interface ILobbyMemberState<
-  TUserID extends PropertyKey,
-  TUserState extends ILobbyUserState<TUserID>,
-  TStatus,
-> {
-  user: TUserState
-  status: TStatus
+interface ILobbyUser<TUserID extends Config.BASE.UserID> {
+  id: TUserID
 }
 
-interface ILobbyUser<TUserID extends PropertyKey> {
-  id: TUserID
-  username: string
+interface ILobbyUserState<TUser extends ILobbyUser<Config.BASE.UserID>> {
+  id: TUser['id']
 }
 
 interface ILobbyMember<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-  TUserState extends ILobbyUserState<TUserID>,
-  TMemberStatus,
-  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
+  T extends Config.MemberTypes<Config.BASE.User, Config.BASE.MemberStatus>,
 > {
-  user: TUser
-  state: Readonly<TMemberState>
-  status: TMemberStatus
+  user: T['user']
+  status: T['status']
   isReady: boolean
 }
 
-export type { ILobbyMember, ILobbyMemberState, ILobbyUser }
+interface ILobbyMemberState<
+  TUserState extends Config.BASE.UserState,
+  TMemberStatus extends Config.BASE.MemberStatus,
+> {
+  user: TUserState
+  status: TMemberStatus
+}
+
+export type { ILobbyMember, ILobbyMemberState, ILobbyUser, ILobbyUserState }
