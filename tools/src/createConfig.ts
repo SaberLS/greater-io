@@ -14,7 +14,25 @@ const createConfig = (__dirname: string): Config => {
     .config(
       eslint.configs.recommended,
       tseslint.configs.recommendedTypeChecked,
-      tseslint.configs.stylisticTypeChecked
+      tseslint.configs.stylisticTypeChecked,
+      {
+        languageOptions: {
+          parserOptions: {
+            projectService: true,
+            tsconfigRootDir: __dirname,
+          },
+        },
+        rules: {
+          '@typescript-eslint/explicit-function-return-type': [
+            'error',
+            {
+              allowExpressions: false,
+              allowTypedFunctionExpressions: false,
+              allowHigherOrderFunctions: false,
+            },
+          ],
+        },
+      }
     )
     .map(config => ({
       ...config,
