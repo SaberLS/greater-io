@@ -1,82 +1,32 @@
 import type { ILobbyManager } from './ILobbyManager'
-import type { ILobby, ILobbyState, ILobbyUserState } from './Lobby/ILobby'
-import type { ILobbyMember, ILobbyMemberState, ILobbyUser } from './LobbyMember'
+import type { ILobby, LobbyBaseStatefullTypes } from './Lobby'
 import type { ILobbyStore } from './LobbyStore'
+import type { Config } from './types'
 
 // TODO: All methods which take an user input unknown type and be casted to desired type by some Validator
 class LobbyManager<
-  TLobbyID extends PropertyKey,
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-  TUserState extends ILobbyUserState<TUserID, TUser>,
-  TMemberStatus,
-  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
-  TMember extends ILobbyMember<
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState
-  >,
-  TLobbyStatus,
-  TLobbyState extends ILobbyState<
-    TLobbyID,
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState,
-    TLobbyStatus
-  >,
-  TLobby extends ILobby<
-    TLobbyID,
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState,
-    TMember,
-    TLobbyStatus,
-    TLobbyState
-  >,
-  TLobbyStore extends ILobbyStore<
-    TLobbyID,
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState,
-    TMember,
-    TLobbyStatus,
-    TLobbyState,
-    TLobby
-  >,
-> implements ILobbyManager<
-  TLobbyID,
-  TUserID,
-  TUser,
-  TUserState,
-  TMemberStatus,
-  TMemberState,
-  TMember,
-  TLobbyStatus,
-  TLobbyState
-> {
-  private readonly Lobby: (user: TUser) => TLobby
+  T extends LobbyBaseStatefullTypes,
+  TLobby extends Config.Statefull<ILobby<T>, Config.BASE.LobbyState>,
+  TLobbyStore extends ILobbyStore<T, TLobby>,
+> implements ILobbyManager<T, TLobby> {
+  private readonly Lobby: (user: T['member']['user']) => TLobby
   private readonly store: TLobbyStore
 
-  constructor(Lobby: (user: TUser) => TLobby, store: TLobbyStore) {
+  constructor(
+    Lobby: (user: T['member']['user']) => TLobby,
+    store: TLobbyStore
+  ) {
     this.Lobby = Lobby
     this.store = store
   }
 
-  create(user: TUser): TLobbyState {
+  create(user: T['member']['user']): Config.Helpers.StateOf<TLobby> {
     if (this.store.hasUser(user.id)) throw new Error('User already in a lobby')
 
     return this.store.addLobby(user.id, this.Lobby(user)).state
   }
 
-  leave(user: TUser): TLobbyState {
+  leave(user: T['member']['user']): Config.Helpers.StateOf<TLobby> {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (lobby === undefined) throw new Error(`User is not a lobby member`)
@@ -89,7 +39,10 @@ class LobbyManager<
     return lobby.state
   }
 
-  join(user: TUser, lobbyId: TLobbyID): TLobbyState {
+  join(
+    user: T['member']['user'],
+    lobbyId: T['id']
+  ): Config.Helpers.StateOf<TLobby> {
     if (this.store.hasUser(user.id)) throw new Error('User already in a lobby')
 
     const lobby = this.store.getLobbyById(lobbyId)
@@ -105,17 +58,18 @@ class LobbyManager<
     return lobby.state
   }
 
-  close(lobbyId: TLobbyID) {
+  close(lobbyId: T['id']): TLobby['state'] {
     const lobby = this.store.getLobbyById(lobbyId)
 
     if (lobby === undefined)
       throw new Error(`Lobby with id: ${String(lobbyId)}, is not available`)
 
-    return this.closeLobby(lobby)
+    this.closeLobby(lobby)
+    return lobby.state
   }
 
   // TODO: close shouldn't delete lobby it should only set lobby.status to closed to dissallow new users from joining, delete should be separate method
-  private closeLobby(lobby: TLobby) {
+  private closeLobby(lobby: TLobby): TLobby['state'] {
     for (const id of lobby.members.keys()) this.store.deleteUserById(id)
 
     lobby.close()
@@ -124,7 +78,10 @@ class LobbyManager<
     return lobby.state
   }
 
-  changeStatus(user: TUser, status: TMember['status']): TLobbyState {
+  changeStatus(
+    user: T['member']['user'],
+    status: T['member']['status']
+  ): TLobby['state'] {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (!lobby?.hasUser(user.id)) throw new Error(`User is not a lobby member`)
@@ -134,19 +91,19 @@ class LobbyManager<
   }
 
   async start(
-    user: TUser,
+    user: T['member']['user'],
     {
       onStart,
       onTick,
       onEnd,
       onAbort,
     }: Partial<{
-      onStart: (lobby: TLobbyState) => void
-      onTick: (count: number, lobby: TLobbyState) => void
-      onEnd: (lobby: TLobbyState) => void
-      onAbort: (lobby: TLobbyState, reason: string) => void
+      onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
+      onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
+      onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
+      onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
     }>
-  ) {
+  ): Promise<TLobby['state']> {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (lobby === undefined)
@@ -162,17 +119,17 @@ class LobbyManager<
     if (!lobby.isReady) throw new Error(`Not all lobby members are ready`)
 
     await lobby.start({
-      onStart: () => {
+      onStart: (): void => {
         onStart?.(lobby.state)
       },
-      onTick: () => {
+      onTick: (): void => {
         onTick?.(lobby.counterState, lobby.state)
       },
       onAbort:
         onAbort === undefined ? undefined : (
-          (reason: string) => onAbort(lobby.state, reason)
+          (reason: string): void => onAbort(lobby.state, reason)
         ),
-      onEnd: onEnd === undefined ? undefined : () => onEnd(lobby.state),
+      onEnd: onEnd === undefined ? undefined : (): void => onEnd(lobby.state),
     })
 
     return lobby.state

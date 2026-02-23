@@ -1,51 +1,42 @@
-import type { ILobbyUserState } from '../Lobby/ILobby'
-import type { LobbyMemberStatus } from '../types'
-import type {
-  ILobbyMember,
-  ILobbyMemberState,
-  ILobbyUser,
-} from './ILobbyMember'
+import type { Config } from '../types'
+import type { ILobbyMember } from './ILobbyMember'
 
 class LobbyMember<
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-> implements ILobbyMember<
-  TUserID,
-  TUser,
-  ILobbyUserState<TUserID, TUser>,
-  LobbyMemberStatus,
-  ILobbyMemberState<TUserID, ILobbyUserState<TUserID, TUser>, LobbyMemberStatus>
-> {
-  #user: TUser
-  #status: LobbyMemberStatus
+  T extends Config.MemberTypes<Config.BASE.User, Config.BASE.MemberStatus>,
+  TState,
+> implements Config.Statefull<ILobbyMember<T>, TState> {
+  #user: T['user']
+  #status: T['status']
 
-  constructor(user: TUser, status: LobbyMemberStatus = 'not-ready') {
+  #createState: (t: LobbyMember<T, TState>) => TState
+
+  constructor(
+    user: T['user'],
+    createState: (t: LobbyMember<T, TState>) => TState,
+    status: T['status']
+  ) {
     this.#user = user
     this.#status = status
+    this.#createState = createState
   }
 
-  get user() {
+  get user(): T['user'] {
     return this.#user
   }
 
-  get state() {
-    return Object.freeze({
-      user: { id: this.user.id, username: this.user.username },
-      status: this.status,
-    })
+  get state(): Readonly<TState> {
+    return Object.freeze(this.#createState(this))
   }
 
-  get status() {
+  get status(): T['status'] {
     return this.#status
   }
 
-  set status(status: LobbyMemberStatus) {
-    if (status === 'in-game' || status === 'ready' || status === 'not-ready')
-      this.#status = status
-    else throw new Error(`${String(status)} is not valid member status`)
+  set status(status: T['status']) {
+    this.#status = status
   }
 
-  get isReady() {
+  get isReady(): boolean {
     return this.status === 'ready'
   }
 }

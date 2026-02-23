@@ -5,64 +5,36 @@ import {
   type Callbacks,
   type TypedController,
 } from '../../../utils'
-import {
-  type ILobbyMember,
-  type ILobbyMemberState,
-  type ILobbyUser,
-} from '../LobbyMember'
-import type { LobbyStatus } from '../types'
-import type { ILobby, ILobbyState, ILobbyUserState } from './ILobby'
+import type { LobbyStatus } from '../types/Definition'
+
+import type { Config } from '../types'
+import type { ILobby, LobbyBaseStatefullTypes } from './ILobby'
 
 class Lobby<
-  TLobbyID extends PropertyKey,
-  TUserID extends PropertyKey,
-  TUser extends ILobbyUser<TUserID>,
-  TUserState extends ILobbyUserState<TUserID>,
-  TMemberStatus,
-  TMemberState extends ILobbyMemberState<TUserID, TUserState, TMemberStatus>,
-  TMember extends ILobbyMember<
-    TUserID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState
-  >,
-> implements ILobby<
-  TLobbyID,
-  TUserID,
-  TUser,
-  TUserState,
-  TMemberStatus,
-  TMemberState,
-  TMember,
-  LobbyStatus,
-  ILobbyState<
-    TLobbyID,
-    TUser,
-    TUserState,
-    TMemberStatus,
-    TMemberState,
-    LobbyStatus,
-    TUserID
-  >
-> {
-  #id: TLobbyID
-  #owner?: TUser
-  readonly #members = new Map<TUserID, TMember>()
+  T extends LobbyBaseStatefullTypes,
+  TState,
+> implements Config.Statefull<ILobby<T>, TState> {
+  #id: T['id']
+  #owner: T['member']['user'] | undefined
+  readonly #members = new Map<T['member']['user']['id'], T['member']>()
   #status: LobbyStatus
   #maxMembers: number
   #counter = new AsyncCounter<string>(ms('1s'), 10)
   #controller?: TypedController<string>
 
-  private readonly createMember: (user: TUser) => TMember
+  #createState: (t: Lobby<T, TState>) => TState
+  private readonly createMember: (user: T['member']['user']) => T['member']
 
   constructor(
-    id: TLobbyID,
-    owner: TUser,
-    createMember: (user: TUser) => TMember,
+    id: T['id'],
+    owner: T['member']['user'],
+    createMember: (user: T['member']['user']) => T['member'],
+    createState: (t: Lobby<T, TState>) => TState,
     maxMembers = 4
   ) {
     this.createMember = createMember
+    this.#createState = createState
+
     this.#members.set(owner.id, this.createMember(owner))
 
     this.#owner = owner
@@ -79,11 +51,11 @@ class Lobby<
     this.#controller?.abort(reason)
   }
 
-  get counterState() {
+  get counterState(): number {
     return this.#counter.state
   }
 
-  async start(callbacks: Partial<Callbacks<string>>) {
+  async start(callbacks: Partial<Callbacks<string>>): Promise<void> {
     this.#controller = createAbortController<string>()
     this.#status = 'starting'
 
@@ -94,53 +66,52 @@ class Lobby<
     }
   }
 
-  isOwner(user: TUser): boolean {
+  isOwner(user: T['member']['user']): boolean {
     return user.id === this.owner?.id
   }
 
-  get members() {
-    return this.#members
+  get members(): Readonly<Map<T['member']['user']['id'], T['member']>> {
+    return Object.freeze(this.#members)
   }
 
-  get isEmpty() {
+  get isEmpty(): boolean {
     return this.#members.size === 0
   }
 
-  remove(user: TUser): void {
+  remove(user: T['member']['user']): void {
     this.members.delete(user.id)
 
     if (user.id === this.owner?.id)
-      this.owner = this.#members.values().next().value?.user
+      this.#owner = this.members.values().next().value?.user
   }
 
-  add(user: TUser) {
+  add(user: T['member']['user']): void {
     this.members.set(user.id, this.createMember(user))
   }
 
-  hasUser(userId: TUserID) {
+  hasUser(userId: T['member']['user']['id']): boolean {
     return this.members.has(userId)
   }
 
-  get membersState(): Record<TUserID, TMemberState> {
-    const result = {} as Record<TUserID, TMemberState>
+  get membersState(): Readonly<
+    Record<T['member']['user']['id'], T['member']['state']>
+  > {
+    const result = {} as Record<T['member']['user']['id'], T['member']['state']>
 
     for (const [id, member] of this.members.entries()) result[id] = member.state
 
-    return result
+    return Object.freeze(result)
   }
 
-  get state() {
-    return Object.freeze({
-      id: this.id,
-      ownerId: this.owner?.id,
-      status: this.status,
-      maxMembers: this.maxMembers,
-      currentMemberCount: this.#members.size,
-      members: this.membersState,
-    })
+  get state(): TState {
+    return Object.freeze(this.#createState(this))
   }
 
-  startGame() {
+  get membersSize(): number {
+    return this.#members.size
+  }
+
+  startGame(): void {
     // simulate game in progress
     this.#status = 'game-in-progress'
 
@@ -148,42 +119,49 @@ class Lobby<
     // for (const member of this.members.values()) member.status = 'in-game'
   }
 
-  changeUserStatus(userId: TUserID, status: TMemberStatus): void {
+  changeUserStatus(
+    userId: T['member']['user']['id'],
+    status: T['member']['status']
+  ): void {
     const member = this.members.get(userId)
 
     if (member) member.status = status
   }
 
-  open() {
+  open(): void {
     this.#status = 'open'
   }
 
   // ------- Getters -----------
-  get maxMembers() {
+  get maxMembers(): number {
     return this.#maxMembers
   }
 
-  get id(): TLobbyID {
+  get id(): T['id'] {
     return this.#id
   }
 
-  private set owner(newOwner: TUser | undefined) {
+  get ownerId(): T['member']['user']['id'] | undefined {
+    return this.#owner?.id
+  }
+
+  private set owner(newOwner: T['member']['user'] | undefined) {
     this.#owner = newOwner
   }
 
-  get owner(): TUser | undefined {
+  get owner(): T['member']['user'] | undefined {
     return this.#owner
   }
 
-  get status() {
+  get status(): T['status'] {
     return this.#status
   }
 
-  get isFull() {
+  get isFull(): boolean {
     return this.members.size >= this.maxMembers
   }
 
-  get isReady() {
+  get isReady(): boolean {
     for (const member of this.members.values())
       if (!member.isReady) return false
 
