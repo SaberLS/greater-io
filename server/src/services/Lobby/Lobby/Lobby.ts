@@ -1,26 +1,33 @@
-import ms from 'ms'
-import {
-  AsyncCounter,
-  createAbortController,
-  type Callbacks,
-  type TypedController,
-} from '../../../utils'
-import type { LobbyStatus } from '../types/Definition'
-
+// import ms from 'ms'
+// import { AsyncCounter, type TypedController } from '../../../utils'
+import type { ILobbyMember, ILobbyUser } from '../LobbyMember'
 import type { Config } from '../types'
-import type { ILobby, LobbyBaseStatefullTypes } from './ILobby'
+import type { ILobby } from './ILobby'
 
+type BaseStatus = 'closed' | 'open'
 class Lobby<
-  T extends LobbyBaseStatefullTypes,
+  T extends Config.LobbyTypes<
+    Config.BASE.LobbyID,
+    BaseStatus,
+    Config.Statefull<
+      ILobbyMember<
+        Config.MemberTypes<
+          ILobbyUser<Config.BASE.UserID>,
+          Config.BASE.MemberStatus
+        >
+      >,
+      Config.BASE.MemberState
+    >
+  >,
   TState,
 > implements Config.Statefull<ILobby<T>, TState> {
   #id: T['id']
   #owner: T['member']['user'] | undefined
   readonly #members = new Map<T['member']['user']['id'], T['member']>()
-  #status: LobbyStatus
+  #status: T['status']
   #maxMembers: number
-  #counter = new AsyncCounter<string>(ms('1s'), 10)
-  #controller?: TypedController<string>
+  // #counter = new AsyncCounter<string>(ms('1s'), 10)
+  // #controller: TypedController<string> | undefined
 
   #createState: (t: Lobby<T, TState>) => TState
   private readonly createMember: (user: T['member']['user']) => T['member']
@@ -47,31 +54,31 @@ class Lobby<
     this.#status = 'closed'
   }
 
-  abortStart(reason: string): void {
-    this.#controller?.abort(reason)
-  }
+  // counterState: number
+  // get counterState(): number {
+  //   return this.#counter.state
+  // }
+  // abortStart(reason: string): void {
+  //   this.#controller?.abort(reason)
+  // }
 
-  get counterState(): number {
-    return this.#counter.state
-  }
+  // async start(callbacks: Partial<Callbacks<string>>): Promise<void> {
+  //   this.#controller = createAbortController<string>()
+  //   // this.#status = 'starting'
 
-  async start(callbacks: Partial<Callbacks<string>>): Promise<void> {
-    this.#controller = createAbortController<string>()
-    this.#status = 'starting'
-
-    try {
-      await this.#counter.start(this.#controller.signal, callbacks)
-    } finally {
-      this.#controller = undefined
-    }
-  }
+  //   try {
+  //     await this.#counter.start(this.#controller.signal, callbacks)
+  //   } finally {
+  //     this.#controller = undefined
+  //   }
+  // }
 
   isOwner(user: T['member']['user']): boolean {
     return user.id === this.owner?.id
   }
 
   get members(): Readonly<Map<T['member']['user']['id'], T['member']>> {
-    return Object.freeze(this.#members)
+    return Object.freeze(new Map(this.#members))
   }
 
   get isEmpty(): boolean {
@@ -109,14 +116,6 @@ class Lobby<
 
   get membersSize(): number {
     return this.#members.size
-  }
-
-  startGame(): void {
-    // simulate game in progress
-    this.#status = 'game-in-progress'
-
-    // TODO: Ideally members shouldn't have manually set status, it should be recognized by the current Lobby or Game status user participates. this change requiers additional property like ready: boolean, because it can only be set manually by user action.
-    // for (const member of this.members.values()) member.status = 'in-game'
   }
 
   changeUserStatus(
@@ -170,3 +169,4 @@ class Lobby<
 }
 
 export { Lobby }
+export type { BaseStatus }

@@ -90,20 +90,20 @@ class LobbyManager<
     return lobby.state
   }
 
-  async start(
-    user: T['member']['user'],
-    {
-      onStart,
-      onTick,
-      onEnd,
-      onAbort,
-    }: Partial<{
-      onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
-      onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
-      onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
-      onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
-    }>
-  ): Promise<TLobby['state']> {
+  start(
+    user: T['member']['user']
+    // {
+    //   onStart,
+    //   onTick,
+    //   onEnd,
+    //   onAbort,
+    // }: Partial<{
+    //   onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
+    //   onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
+    //   onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
+    //   onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
+    // }>
+  ): TLobby['state'] {
     const lobby = this.store.getLobbyByUserId(user.id)
 
     if (lobby === undefined)
@@ -118,19 +118,19 @@ class LobbyManager<
       throw new Error('Game is currently in progress')
     if (!lobby.isReady) throw new Error(`Not all lobby members are ready`)
 
-    await lobby.start({
-      onStart: (): void => {
-        onStart?.(lobby.state)
-      },
-      onTick: (): void => {
-        onTick?.(lobby.counterState, lobby.state)
-      },
-      onAbort:
-        onAbort === undefined ? undefined : (
-          (reason: string): void => onAbort(lobby.state, reason)
-        ),
-      onEnd: onEnd === undefined ? undefined : (): void => onEnd(lobby.state),
-    })
+    // await lobby.start({
+    //   onStart: (): void => {
+    //     onStart?.(lobby.state)
+    //   },
+    //   onTick: (): void => {
+    //     onTick?.(lobby.counterState, lobby.state)
+    //   },
+    //   onAbort:
+    //     onAbort === undefined ? undefined : (
+    //       (reason: string): void => onAbort(lobby.state, reason)
+    //     ),
+    //   onEnd: onEnd === undefined ? undefined : (): void => onEnd(lobby.state),
+    // })
 
     return lobby.state
   }

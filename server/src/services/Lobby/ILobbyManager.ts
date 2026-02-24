@@ -28,16 +28,16 @@ interface ILobbyManager<
   close(lobbyId: T['id']): Config.Helpers.StateOf<TLobby>
 
   start(
-    user: T['member']['user'],
-    options?: Partial<{
-      countFrom: number
-      delay: number
-      onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
-      onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
-      onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
-      onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
-    }>
-  ): Promise<Config.Helpers.StateOf<TLobby>>
+    user: T['member']['user']
+    // options?: Partial<{
+    //   countFrom: number
+    //   delay: number
+    //   onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
+    //   onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
+    //   onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
+    //   onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
+    // }>
+  ): Config.Helpers.StateOf<TLobby>
 
   changeStatus(
     user: T['member']['user'],

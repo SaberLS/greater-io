@@ -1,4 +1,3 @@
-import type { Callbacks } from '../../../utils'
 import type { ILobbyMember, ILobbyUser } from '../LobbyMember'
 import type { Config } from '../types'
 
@@ -27,20 +26,19 @@ type TOfLobby<TLobby extends ILobby<LobbyBaseTypes>> =
   TLobby extends ILobby<infer T> ? T : never
 
 interface ILobby<T extends LobbyBaseTypes> {
-  id: T['id']
-  owner: T['member']['user'] | undefined
-  status: T['status']
-  isEmpty: boolean
-  isFull: boolean
-  isReady: boolean
+  get id(): T['id']
+  get owner(): T['member']['user'] | undefined
+  get status(): T['status']
+  set status(status: T['status'])
+  get isEmpty(): boolean
+  get isFull(): boolean
+  get isReady(): boolean
 
-  counterState: number
+  // counterState: number
 
-  maxMembers: number
-  membersSize: number
-  members: Readonly<Map<T['member']['user']['id'], T['member']>>
-
-  // game_instance: Game // game object itself
+  get maxMembers(): number
+  get membersSize(): number
+  get members(): Readonly<Map<T['member']['user']['id'], T['member']>>
 
   add(user: T['member']['user']): void
   remove(user: T['member']['user']): void
@@ -54,9 +52,6 @@ interface ILobby<T extends LobbyBaseTypes> {
   ): void
 
   close(): void
-
-  start(callbacks: Partial<Callbacks<string>>): Promise<void>
-  abortStart(reason: string): void
 }
 
 interface LobbyStartCallbacks<TAbortReason, TLobbyState> {
