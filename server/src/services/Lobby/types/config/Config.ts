@@ -18,6 +18,6 @@ interface LobbyTypes<
   status: TLobbyStatus
 }
 
-type Statefull<T extends object, TState> = T & { state: TState }
+type Statefull<T extends object, TState> = T & { get state(): TState }
 
 export type { LobbyTypes, MemberTypes, Statefull }
