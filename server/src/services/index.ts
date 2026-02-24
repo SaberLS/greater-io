@@ -1,1 +1,1 @@
-export * from './Lobby'
+export * as Lobby from './Lobby'
