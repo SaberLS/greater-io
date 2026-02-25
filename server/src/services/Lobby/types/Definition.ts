@@ -12,16 +12,26 @@ import type { ILobbyStore } from '../LobbyStore'
 type LobbyID = ReturnType<typeof crypto.randomUUID>
 type LobbyUserID = ISocketUser['id']
 type LobbyUser = ISocketUser
-type LobbyUserState = ILobbyUserState<LobbyUser>
+interface LobbyUserState extends ILobbyUserState {
+  id: LobbyUserID
+}
 
 type LobbyMemberStatus = 'ready' | 'in-game' | 'not-ready'
 type LobbyStatus = 'open' | 'closed' | 'game-in-progress' | 'starting'
 
-type MemberTypes = Config.MemberTypes<LobbyUser, LobbyMemberStatus>
-type LobbyMemberState = ILobbyMemberState<LobbyUserState, LobbyMemberStatus>
+type MemberTypes = Config.MemberTypes<LobbyUser>
+interface LobbyMemberState extends ILobbyMemberState {
+  user: LobbyUserState
+  status: LobbyMemberStatus
+}
 
 type LobbyMember = Config.Statefull<ILobbyMember<MemberTypes>, LobbyMemberState>
-type LobbyTypes = Config.LobbyTypes<LobbyID, LobbyStatus, LobbyMember>
+interface LobbyTypes extends Config.MemberTypes {
+  id: LobbyID
+  status: LobbyStatus
+  member_instance: LobbyMember
+  member: MemberTypes
+}
 
 type LobbyState = ILobbyState<LobbyTypes>
 type Lobby = Config.Statefull<ILobby<LobbyTypes>, LobbyState>

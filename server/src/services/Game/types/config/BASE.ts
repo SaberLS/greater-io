@@ -5,4 +5,13 @@ type Question = object
 type GameStatus = string
 type PlayerStatus = string
 
-export type { GameID, GameStatus, PlayerStatus, Question, Score }
+type GameLobbyStatus = string
+
+export type {
+  GameID,
+  GameLobbyStatus,
+  GameStatus,
+  PlayerStatus,
+  Question,
+  Score,
+}

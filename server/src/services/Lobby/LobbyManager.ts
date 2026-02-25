@@ -1,11 +1,12 @@
 import type { ILobbyManager } from './ILobbyManager'
 import type { ILobby, LobbyBaseStatefullTypes } from './Lobby'
+import type { ILobbyUser } from './LobbyMember'
 import type { ILobbyStore } from './LobbyStore'
 import type { Config } from './types'
 
 // TODO: All methods which take an user input unknown type and be casted to desired type by some Validator
 class LobbyManager<
-  T extends LobbyBaseStatefullTypes,
+  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
   TLobby extends Config.Statefull<ILobby<T>, Config.BASE.LobbyState>,
   TLobbyStore extends ILobbyStore<T, TLobby>,
 > implements ILobbyManager<T, TLobby> {

@@ -1,22 +1,8 @@
-import type { ILobby } from '../Lobby/ILobby'
-import type { ILobbyMember, ILobbyUser } from '../LobbyMember'
-import type { Config } from '../types'
+import type { ILobby, LobbyBaseTypes } from '../Lobby/ILobby'
 import type { ILobbyStore } from './ILobbyStore'
 
 class LobbyStore<
-  T extends Config.LobbyTypes<
-    Config.BASE.LobbyID,
-    Config.BASE.LobbyStatus,
-    Config.Statefull<
-      ILobbyMember<
-        Config.MemberTypes<
-          ILobbyUser<Config.BASE.UserID>,
-          Config.BASE.MemberStatus
-        >
-      >,
-      Config.BASE.MemberState
-    >
-  >,
+  T extends LobbyBaseTypes,
   TLobby extends ILobby<T>,
 > implements ILobbyStore<T, TLobby> {
   readonly #userToLobby = new Map<T['member']['user']['id'], TLobby>()

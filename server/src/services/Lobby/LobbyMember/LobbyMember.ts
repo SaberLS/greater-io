@@ -2,7 +2,7 @@ import type { Config } from '../types'
 import type { ILobbyMember } from './ILobbyMember'
 
 class LobbyMember<
-  T extends Config.MemberTypes<Config.BASE.User, Config.BASE.MemberStatus>,
+  T extends Config.MemberTypes,
   TState,
 > implements Config.Statefull<ILobbyMember<T>, TState> {
   #user: T['user']

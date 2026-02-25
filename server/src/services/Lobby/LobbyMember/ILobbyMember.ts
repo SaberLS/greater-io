@@ -1,27 +1,22 @@
 import type { Config } from '../types'
 
-interface ILobbyUser<TUserID extends Config.BASE.UserID> {
-  id: TUserID
+interface ILobbyUser {
+  id: Config.BASE.UserID
 }
 
-interface ILobbyUserState<TUser extends ILobbyUser<Config.BASE.UserID>> {
-  id: TUser['id']
+interface ILobbyUserState {
+  id: Config.BASE.UserID
 }
 
 interface ILobbyMember<
-  T extends Config.MemberTypes<Config.BASE.User, Config.BASE.MemberStatus>,
-> {
-  user: T['user']
-  status: T['status']
+  T extends Config.MemberTypes,
+> extends Config.MemberInstance<T> {
   isReady: boolean
 }
 
-interface ILobbyMemberState<
-  TUserState extends Config.BASE.UserState,
-  TMemberStatus extends Config.BASE.MemberStatus,
-> {
-  user: TUserState
-  status: TMemberStatus
+interface ILobbyMemberState {
+  user: Config.BASE.UserState
+  status: Config.BASE.MemberStatus
 }
 
 export type { ILobbyMember, ILobbyMemberState, ILobbyUser, ILobbyUserState }

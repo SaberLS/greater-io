@@ -1,6 +1,6 @@
 import { parseError } from '@greater-io/shared'
 import type { Namespace } from 'socket.io'
-import { Lobby, LobbyMember } from '../../services'
+import { Lobby } from '../../services'
 import { LobbyManager } from '../../services/Lobby/LobbyManager'
 import { LobbyStore } from '../../services/Lobby/LobbyStore'
 
@@ -19,21 +19,25 @@ function registerProtectedNamespace(
   const protectedNs = namespace.use(socketJwtAuth) as IoAuthenticatedNamespace
 
   const createMemberState = (
-    member: LobbyMember<Definition.MemberTypes, Definition.LobbyMemberState>
+    member: Lobby.LobbyMember<
+      Definition.MemberTypes,
+      Definition.LobbyMemberState
+    >
   ): Definition.LobbyMemberState => ({
     user: { id: member.user.id },
-    status: member.status,
+    status: member.status as Definition.LobbyMemberStatus,
   })
 
-  const createMember = (user: Definition.LobbyUser): Definition.LobbyMember =>
-    new LobbyMember<Definition.MemberTypes, Definition.LobbyMemberState>(
-      user,
-      createMemberState,
-      'in-game'
-    )
+  const createMember = (
+    user: Definition.LobbyUser
+  ): Lobby.Definition.LobbyMember =>
+    new Lobby.LobbyMember<
+      Lobby.Definition.MemberTypes,
+      Lobby.Definition.LobbyMemberState
+    >(user, createMemberState, 'in-game')
 
   const createLobbyState = (
-    lobby: Lobby<Definition.LobbyTypes, Definition.LobbyState>
+    lobby: Lobby.Lobby<Lobby.Definition.LobbyTypes, Lobby.Definition.LobbyState>
   ): Definition.LobbyState => ({
     id: lobby.id,
     ownerId: lobby.owner?.id,
@@ -43,8 +47,10 @@ function registerProtectedNamespace(
     members: lobby.membersState,
   })
 
-  const createLobby = (user: Definition.LobbyUser): Definition.Lobby =>
-    new Lobby<Definition.LobbyTypes, Definition.LobbyState>(
+  const createLobby = (
+    user: Lobby.Definition.LobbyUser
+  ): Lobby.Definition.Lobby =>
+    new Lobby.Lobby<Lobby.Definition.LobbyTypes, Lobby.Definition.LobbyState>(
       crypto.randomUUID(),
       user,
       createMember,
@@ -178,34 +184,34 @@ function registerProtectedNamespace(
       )
     )
 
-    socket.on('lobby:start', async (): Promise<void> => {
-      try {
-        await lobbyManager.start(user, {
-          onStart(lobby): void {
-            protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:start')
+    //   socket.on('lobby:start', async (): Promise<void> => {
+    //     try {
+    //       await lobbyManager.start(user, {
+    //         onStart(lobby): void {
+    //           protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:start')
 
-            emitLobbyState(lobby)
-          },
-          onTick(count, lobby): void {
-            protectedNs
-              .to(`lobby:${lobby.id}`)
-              .emit('lobby:start:count:tick', 10 - count)
-          },
-          onEnd(lobby): void {
-            protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:end')
+    //           emitLobbyState(lobby)
+    //         },
+    //         onTick(count, lobby): void {
+    //           protectedNs
+    //             .to(`lobby:${lobby.id}`)
+    //             .emit('lobby:start:count:tick', 10 - count)
+    //         },
+    //         onEnd(lobby): void {
+    //           protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:end')
 
-            emitLobbyState(lobby)
-          },
-          onAbort(lobby, reason): void {
-            socket.emit('lobby:start:abort', reason)
+    //           emitLobbyState(lobby)
+    //         },
+    //         onAbort(lobby, reason): void {
+    //           socket.emit('lobby:start:abort', reason)
 
-            emitLobbyState(lobby)
-          },
-        })
-      } catch (error) {
-        socket.emit('lobby:error', parseError(error).message)
-      }
-    })
+    //           emitLobbyState(lobby)
+    //         },
+    //       })
+    //     } catch (error) {
+    //       socket.emit('lobby:error', parseError(error).message)
+    //     }
+    //   })
   })
 
   // -_-_-_-_-_-_ GAME -_-_-_-_-_-_

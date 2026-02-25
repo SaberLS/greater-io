@@ -1,29 +1,16 @@
 import type { ILobbyMember, ILobbyUser } from '../LobbyMember'
 import type { Config } from '../types'
+import type { Statefull } from '../types/config'
 
-type LobbyBaseTypes = Config.LobbyTypes<
-  Config.BASE.LobbyID,
-  Config.BASE.LobbyStatus,
-  ILobbyMember<
-    Config.MemberTypes<ILobbyUser<Config.BASE.UserID>, Config.BASE.MemberStatus>
-  >
->
-type LobbyBaseStatefullTypes = Config.LobbyTypes<
-  Config.BASE.LobbyID,
-  Config.BASE.LobbyStatus,
-  Config.Statefull<
-    ILobbyMember<
-      Config.MemberTypes<
-        ILobbyUser<Config.BASE.UserID>,
-        Config.BASE.MemberStatus
-      >
-    >,
-    Config.BASE.MemberState
-  >
->
+type LobbyBaseTypes = Config.LobbyTypes<Config.MemberTypes<ILobbyUser>>
 
-type TOfLobby<TLobby extends ILobby<LobbyBaseTypes>> =
-  TLobby extends ILobby<infer T> ? T : never
+type LobbyBaseStatefullTypes<TMember extends Config.MemberTypes<ILobbyUser>> =
+  Config.LobbyTypes<TMember> & {
+    member_instance: Statefull<ILobbyMember<TMember>, Config.BASE.MemberState>
+  }
+
+// type TOfLobby<TLobby extends ILobby<LobbyBaseTypes>> =
+//   TLobby extends ILobby<infer T> ? T : never
 
 interface ILobby<T extends LobbyBaseTypes> {
   get id(): T['id']
@@ -32,13 +19,12 @@ interface ILobby<T extends LobbyBaseTypes> {
   set status(status: T['status'])
   get isEmpty(): boolean
   get isFull(): boolean
-  get isReady(): boolean
 
   // counterState: number
 
   get maxMembers(): number
   get membersSize(): number
-  get members(): Readonly<Map<T['member']['user']['id'], T['member']>>
+  get members(): Readonly<Map<T['member']['user']['id'], T['member_instance']>>
 
   add(user: T['member']['user']): void
   remove(user: T['member']['user']): void
@@ -61,13 +47,17 @@ interface LobbyStartCallbacks<TAbortReason, TLobbyState> {
   onAbort: (lobby: TLobbyState, reason: TAbortReason) => void
 }
 
-interface ILobbyState<T extends LobbyBaseStatefullTypes> {
+interface ILobbyState<
+  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
+> {
   id: T['id']
   ownerId: T['member']['user']['id'] | undefined
   status: T['status']
   maxMembers: number
   currentMemberCount: number
-  members: Readonly<Record<T['member']['user']['id'], T['member']['state']>>
+  members: Readonly<
+    Record<T['member']['user']['id'], T['member_instance']['state']>
+  >
 }
 
 export type {
@@ -76,5 +66,4 @@ export type {
   LobbyBaseStatefullTypes,
   LobbyBaseTypes,
   LobbyStartCallbacks,
-  TOfLobby,
 }

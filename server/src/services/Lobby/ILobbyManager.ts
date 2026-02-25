@@ -1,22 +1,10 @@
-import type { ILobby } from './Lobby'
-import type { ILobbyMember, ILobbyUser } from './LobbyMember'
+import type { ILobby, LobbyBaseStatefullTypes } from './Lobby'
+import type { ILobbyUser } from './LobbyMember'
 import type { Config } from './types'
 
 interface ILobbyManager<
-  T extends Config.LobbyTypes<
-    Config.BASE.LobbyID,
-    Config.BASE.LobbyStatus,
-    Config.Statefull<
-      ILobbyMember<
-        Config.MemberTypes<
-          ILobbyUser<Config.BASE.UserID>,
-          Config.BASE.MemberStatus
-        >
-      >,
-      unknown
-    >
-  >,
-  TLobby extends Config.Statefull<ILobby<T>, unknown>,
+  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
+  TLobby extends Config.Statefull<ILobby<T>, Config.BASE.LobbyState>,
 > {
   create(user: T['member']['user']): Config.Helpers.StateOf<TLobby>
   leave(user: T['member']['user']): Config.Helpers.StateOf<TLobby>

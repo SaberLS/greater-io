@@ -1,41 +1,30 @@
 // import ms from 'ms'
 // import { AsyncCounter, type TypedController } from '../../../utils'
-import type { ILobbyMember, ILobbyUser } from '../LobbyMember'
+import type { ILobbyUser } from '../LobbyMember'
 import type { Config } from '../types'
-import type { ILobby } from './ILobby'
+import type { ILobby, LobbyBaseStatefullTypes } from './ILobby'
 
-type BaseStatus = 'closed' | 'open'
 class Lobby<
-  T extends Config.LobbyTypes<
-    Config.BASE.LobbyID,
-    BaseStatus,
-    Config.Statefull<
-      ILobbyMember<
-        Config.MemberTypes<
-          ILobbyUser<Config.BASE.UserID>,
-          Config.BASE.MemberStatus
-        >
-      >,
-      Config.BASE.MemberState
-    >
-  >,
+  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
   TState,
 > implements Config.Statefull<ILobby<T>, TState> {
   #id: T['id']
   #owner: T['member']['user'] | undefined
-  readonly #members = new Map<T['member']['user']['id'], T['member']>()
+  readonly #members = new Map<T['member']['user']['id'], T['member_instance']>()
   #status: T['status']
   #maxMembers: number
   // #counter = new AsyncCounter<string>(ms('1s'), 10)
   // #controller: TypedController<string> | undefined
 
   #createState: (t: Lobby<T, TState>) => TState
-  private readonly createMember: (user: T['member']['user']) => T['member']
+  private readonly createMember: (
+    user: T['member']['user']
+  ) => T['member_instance']
 
   constructor(
     id: T['id'],
     owner: T['member']['user'],
-    createMember: (user: T['member']['user']) => T['member'],
+    createMember: (user: T['member']['user']) => T['member_instance'],
     createState: (t: Lobby<T, TState>) => TState,
     maxMembers = 4
   ) {
@@ -77,7 +66,9 @@ class Lobby<
     return user.id === this.owner?.id
   }
 
-  get members(): Readonly<Map<T['member']['user']['id'], T['member']>> {
+  get members(): Readonly<
+    Map<T['member']['user']['id'], T['member_instance']>
+  > {
     return Object.freeze(new Map(this.#members))
   }
 
@@ -101,9 +92,12 @@ class Lobby<
   }
 
   get membersState(): Readonly<
-    Record<T['member']['user']['id'], T['member']['state']>
+    Record<T['member']['user']['id'], T['member_instance']['state']>
   > {
-    const result = {} as Record<T['member']['user']['id'], T['member']['state']>
+    const result = {} as Record<
+      T['member']['user']['id'],
+      T['member_instance']['state']
+    >
 
     for (const [id, member] of this.members.entries()) result[id] = member.state
 
@@ -159,14 +153,6 @@ class Lobby<
   get isFull(): boolean {
     return this.members.size >= this.maxMembers
   }
-
-  get isReady(): boolean {
-    for (const member of this.members.values())
-      if (!member.isReady) return false
-
-    return true
-  }
 }
 
 export { Lobby }
-export type { BaseStatus }
