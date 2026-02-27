@@ -119,6 +119,7 @@ const createConfig = (__dirname: string): Config => {
       },
       rules: {
         ...pluginJest.configs['flat/recommended'].rules,
+        '@typescript-eslint/explicit-function-return-type': 'off',
         'jest/no-disabled-tests': 'warn',
         'jest/no-focused-tests': 'error',
         'jest/no-identical-title': 'error',
