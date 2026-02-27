@@ -1,6 +1,9 @@
 import type * as Lobby from '../../../Lobby'
+import type { IGameEngine } from '../../GameEngine/IGameEngine'
+import type { IGameLobbyMember } from '../../GameLobbyMember/IGameLobbyMember'
 import type * as BASE from './BASE'
 
+// TODO: Player shouldn't be a member
 interface PlayerTypes<
   TUser extends Lobby.Config.BASE.User = Lobby.Config.BASE.User,
 > extends Lobby.Config.MemberTypes<TUser> {
@@ -10,30 +13,46 @@ interface PlayerTypes<
 interface PlayerInstance<T extends PlayerTypes> extends Lobby.Config
   .MemberInstance<T> {
   score: T['score']
+  isReady: boolean
 }
 
-interface GameTypes<TPlayer extends PlayerTypes = PlayerTypes> {
+interface GameEngineTypes {
+  context: BASE.Context
+  answer_score: BASE.AnswerScore
+  answer: BASE.Answer
+  score: BASE.Score
+  question: BASE.Question
+  total_score: BASE.TotalScore
+}
+
+interface GameTypes<
+  TPlayer extends PlayerTypes = PlayerTypes,
+  TEngine extends GameEngineTypes = GameEngineTypes,
+> {
   id: BASE.GameID
   player: TPlayer
-  player_instance: PlayerInstance<TPlayer>
-  question: BASE.Question
+  player_instance: PlayerInstance<TPlayer> & { score: TEngine['score'] }
   status: BASE.GameStatus
+  engine: TEngine
+  engine_instance: IGameEngine<TEngine>
 }
 
 interface GameInstance<TGame extends GameTypes> {
   id: TGame['id']
-  questions: TGame['question']
+  questions: TGame['engine']['question'][]
   status: TGame['status']
 }
 
 interface GameLobbyTypes<TGame extends GameTypes = GameTypes> extends Lobby
-  .Config.LobbyTypes<TGame['player']> {
+  .Config.LobbyTypes<Omit<TGame['player'], 'score'>> {
   game: TGame
   game_instance: GameInstance<TGame>
   status: BASE.GameLobbyStatus
+  member_instance: IGameLobbyMember<TGame['player']>
 }
 
 export type {
+  GameEngineTypes,
   GameInstance,
   GameLobbyTypes,
   GameTypes,

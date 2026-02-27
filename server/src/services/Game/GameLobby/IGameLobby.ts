@@ -7,11 +7,11 @@ interface IGameLobby<
   >,
 > extends Lobby.ILobby<T> {
   gameInstance: T['game_instance'] | undefined
-
-  get isReady(): boolean
   // gameConfig: T['game']['config']
 
-  start(): Promise<void>
+  get isReady(): boolean
+
+  start(): void
   // abortStart(reason: string): void
 }
 

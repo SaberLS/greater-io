@@ -1,19 +1,25 @@
-import type { LobbyUser } from '../../Lobby/types/Definition'
+import type { ILobbyUser } from '../../Lobby'
 import type { Config } from '../types'
 import type { PlayerTypes } from '../types/config'
 
-interface IGameInstance<T extends Config.GameTypes<PlayerTypes<LobbyUser>>> {
+interface IGameInstance<T extends Config.GameTypes<PlayerTypes<ILobbyUser>>> {
   players: Map<T['player']['user']['id'], T['player_instance']>
-  questions: T['question'][]
+  questions: T['engine']['question'][]
 
-  // rules: T['rules']
   start(): void
 
+  submitAnswer(
+    playerId: T['player']['user']['id'],
+    questionIndex: number,
+    answer: T['engine']['answer'],
+    context: T['engine']['context']
+  ): T['engine']['answer_score']
+
   get leaderboard(): T['player_instance'][]
-  get startedAt(): number
+  get startAt(): number
 
   get status(): T['status']
-  get isRunning(): boolean
+  get isInProgress(): boolean
   get isFinished(): boolean
 }
 
