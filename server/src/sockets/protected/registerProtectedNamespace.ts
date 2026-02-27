@@ -4,7 +4,16 @@ import { Lobby } from '../../services'
 import { LobbyManager } from '../../services/Lobby/LobbyManager'
 import { LobbyStore } from '../../services/Lobby/LobbyStore'
 
+import type { ISocketUser } from '../../models'
+import {
+  GameInstance,
+  GameLobby,
+  Player,
+  SimpleMathEngine,
+  type IPlayer,
+} from '../../services/Game'
 import { Definition } from '../../services/Lobby/types'
+import type { LobbyUserID } from '../../services/LobbyTypesDefinition'
 import type {
   IoAuthenticatedNamespace,
   IoAuthenticatedSocket,
@@ -17,6 +26,30 @@ function registerProtectedNamespace(
   // HACK: it works with promise
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const protectedNs = namespace.use(socketJwtAuth) as IoAuthenticatedNamespace
+
+  const createPlayer = (
+    user: Definition.LobbyTypes['member']['user']
+  ): IPlayer<Definition.LobbyTypes['player']> => {
+    return new Player<Definition.PlayerTypes, unknown>(
+      user,
+      {} as Definition.PlayerTypes['score'],
+      '----',
+      (): unknown => ''
+    )
+  }
+
+  const engine = new SimpleMathEngine()
+
+  const createGame = (
+    users: readonly Definition.LobbyTypes['member']['user'][]
+  ): Definition.LobbyTypes['game_instance'] => {
+    return new GameInstance<Definition.GameTypes>(
+      Math.random(),
+      users as ISocketUser[],
+      engine,
+      createPlayer
+    )
+  }
 
   const createMemberState = (
     member: Lobby.LobbyMember<
@@ -34,7 +67,17 @@ function registerProtectedNamespace(
     new Lobby.LobbyMember<
       Lobby.Definition.MemberTypes,
       Lobby.Definition.LobbyMemberState
-    >(user, createMemberState, 'in-game')
+    >(user, createMemberState, 'not-ready')
+
+  const membersState = (
+    members: Readonly<Map<LobbyUserID, Definition.LobbyMember>>
+  ): Readonly<Record<LobbyUserID, Definition.LobbyMemberState>> => {
+    const result = {} as Record<LobbyUserID, Definition.LobbyMemberState>
+
+    for (const [id, member] of members.entries()) result[id] = member.state
+
+    return Object.freeze(result)
+  }
 
   const createLobbyState = (
     lobby: Lobby.Lobby<Lobby.Definition.LobbyTypes, Lobby.Definition.LobbyState>
@@ -44,13 +87,14 @@ function registerProtectedNamespace(
     status: lobby.status,
     maxMembers: lobby.maxMembers,
     currentMemberCount: lobby.membersSize,
-    members: lobby.membersState,
+    members: membersState(lobby.members),
   })
 
   const createLobby = (
     user: Lobby.Definition.LobbyUser
   ): Lobby.Definition.Lobby =>
-    new Lobby.Lobby<Lobby.Definition.LobbyTypes, Lobby.Definition.LobbyState>(
+    new GameLobby<Lobby.Definition.LobbyTypes, Lobby.Definition.LobbyState>(
+      createGame,
       crypto.randomUUID(),
       user,
       createMember,
