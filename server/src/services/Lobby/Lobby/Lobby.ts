@@ -1,13 +1,12 @@
 // import ms from 'ms'
 // import { AsyncCounter, type TypedController } from '../../../utils'
-import type { ILobbyUser } from '../LobbyMember'
 import type { Config } from '../types'
-import type { ILobby, LobbyBaseStatefullTypes } from './ILobby'
+import type { ILobby, LobbyBaseTypes } from './ILobby'
 
-class Lobby<
-  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
-  TState,
-> implements Config.Statefull<ILobby<T>, TState> {
+class Lobby<T extends LobbyBaseTypes, TState> implements Config.Statefull<
+  ILobby<T>,
+  TState
+> {
   #id: T['id']
   #owner: T['member']['user'] | undefined
   readonly #members = new Map<T['member']['user']['id'], T['member_instance']>()
@@ -72,37 +71,57 @@ class Lobby<
     return Object.freeze(new Map(this.#members))
   }
 
+  get users(): readonly T['member']['user'][] {
+    const users: T['member']['user'][] = []
+
+    for (const member of this.#members.values()) users.push(member.user)
+
+    return Object.freeze(users)
+  }
+
   get isEmpty(): boolean {
     return this.#members.size === 0
   }
 
   remove(user: T['member']['user']): void {
-    this.members.delete(user.id)
+    this.#members.delete(user.id)
 
-    if (user.id === this.owner?.id)
-      this.#owner = this.members.values().next().value?.user
+    if (this.isOwner(user)) this.passOwnership()
+  }
+
+  passOwnership(): void {
+    this.owner = this.#members.values().next().value?.user
+  }
+
+  changeOwner(user: T['member']['user']): void {
+    if (!this.hasUser(user.id)) throw new Error('User is not a Lobby Member')
+
+    this.#owner = user
   }
 
   add(user: T['member']['user']): void {
-    this.members.set(user.id, this.createMember(user))
+    if (this.hasUser(user.id)) throw new Error('User already in a lobby')
+    if (this.isFull) throw new Error('Lobby is full')
+
+    this.#members.set(user.id, this.createMember(user))
   }
 
   hasUser(userId: T['member']['user']['id']): boolean {
-    return this.members.has(userId)
+    return this.#members.has(userId)
   }
 
-  get membersState(): Readonly<
-    Record<T['member']['user']['id'], T['member_instance']['state']>
-  > {
-    const result = {} as Record<
-      T['member']['user']['id'],
-      T['member_instance']['state']
-    >
+  // get membersState(): Readonly<
+  //   Record<T['member']['user']['id'], T['member_instance']['state']>
+  // > {
+  //   const result = {} as Record<
+  //     T['member']['user']['id'],
+  //     T['member_instance']['state']
+  //   >
 
-    for (const [id, member] of this.members.entries()) result[id] = member.state
+  //   for (const [id, member] of this.members.entries()) result[id] = member.state
 
-    return Object.freeze(result)
-  }
+  //   return Object.freeze(result)
+  // }
 
   get state(): TState {
     return Object.freeze(this.#createState(this))
@@ -116,9 +135,10 @@ class Lobby<
     userId: T['member']['user']['id'],
     status: T['member']['status']
   ): void {
-    const member = this.members.get(userId)
+    const member = this.#members.get(userId)
 
-    if (member) member.status = status
+    if (member === undefined) throw new Error(`User is not a lobby member`)
+    member.status = status
   }
 
   open(): void {
@@ -151,7 +171,7 @@ class Lobby<
   }
 
   get isFull(): boolean {
-    return this.members.size >= this.maxMembers
+    return this.#members.size >= this.maxMembers
   }
 }
 

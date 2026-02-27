@@ -4,10 +4,12 @@ import type { Statefull } from '../types/config'
 
 type LobbyBaseTypes = Config.LobbyTypes<Config.MemberTypes<ILobbyUser>>
 
-type LobbyBaseStatefullTypes<TMember extends Config.MemberTypes<ILobbyUser>> =
-  Config.LobbyTypes<TMember> & {
-    member_instance: Statefull<ILobbyMember<TMember>, Config.BASE.MemberState>
-  }
+type LobbyBaseStatefullTypes<
+  TMember extends Config.MemberTypes<ILobbyUser> =
+    Config.MemberTypes<ILobbyUser>,
+> = Config.LobbyTypes<TMember> & {
+  member_instance: Statefull<ILobbyMember<TMember>, Config.BASE.MemberState>
+}
 
 // type TOfLobby<TLobby extends ILobby<LobbyBaseTypes>> =
 //   TLobby extends ILobby<infer T> ? T : never
@@ -25,6 +27,7 @@ interface ILobby<T extends LobbyBaseTypes> {
   get maxMembers(): number
   get membersSize(): number
   get members(): Readonly<Map<T['member']['user']['id'], T['member_instance']>>
+  get users(): readonly T['member']['user'][]
 
   add(user: T['member']['user']): void
   remove(user: T['member']['user']): void
@@ -47,9 +50,7 @@ interface LobbyStartCallbacks<TAbortReason, TLobbyState> {
   onAbort: (lobby: TLobbyState, reason: TAbortReason) => void
 }
 
-interface ILobbyState<
-  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
-> {
+interface ILobbyState<T extends LobbyBaseStatefullTypes> {
   id: T['id']
   ownerId: T['member']['user']['id'] | undefined
   status: T['status']
@@ -60,10 +61,4 @@ interface ILobbyState<
   >
 }
 
-export type {
-  ILobby,
-  ILobbyState,
-  LobbyBaseStatefullTypes,
-  LobbyBaseTypes,
-  LobbyStartCallbacks,
-}
+export type { ILobby, ILobbyState, LobbyBaseTypes, LobbyStartCallbacks }

@@ -1,9 +1,8 @@
-import type { ILobby, LobbyBaseStatefullTypes } from './Lobby'
-import type { ILobbyUser } from './LobbyMember'
+import type { ILobby, LobbyBaseTypes } from './Lobby'
 import type { Config } from './types'
 
 interface ILobbyManager<
-  T extends LobbyBaseStatefullTypes<Config.MemberTypes<ILobbyUser>>,
+  T extends LobbyBaseTypes,
   TLobby extends Config.Statefull<ILobby<T>, Config.BASE.LobbyState>,
 > {
   create(user: T['member']['user']): Config.Helpers.StateOf<TLobby>
@@ -15,17 +14,17 @@ interface ILobbyManager<
 
   close(lobbyId: T['id']): Config.Helpers.StateOf<TLobby>
 
-  start(
-    user: T['member']['user']
-    // options?: Partial<{
-    //   countFrom: number
-    //   delay: number
-    //   onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
-    //   onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
-    //   onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
-    //   onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
-    // }>
-  ): Config.Helpers.StateOf<TLobby>
+  // start(
+  //   user: T['member']['user']
+  //   // options?: Partial<{
+  //   //   countFrom: number
+  //   //   delay: number
+  //   //   onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
+  //   //   onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
+  //   //   onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
+  //   //   onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
+  //   // }>
+  // ): Config.Helpers.StateOf<TLobby>
 
   changeStatus(
     user: T['member']['user'],
