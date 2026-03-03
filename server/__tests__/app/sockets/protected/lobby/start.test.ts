@@ -1,5 +1,8 @@
 import { parseError } from '@greater-io/shared'
-import type { LobbyState } from '../../../../../src/services'
+import type {
+  GameState,
+  LobbyState,
+} from '../../../../../src/services/LobbyTypesDefinition'
 import {
   buildTestServer,
   once,
@@ -7,6 +10,49 @@ import {
   type TestUserMethods,
 } from '../../../../utils'
 import { expectLobbyId } from '../../../../utils/matchers/randomUUIDRegex'
+
+function solveMathExpressions(expressions: string[]): number[] {
+  return expressions.map(expr => {
+    // Remove any accidental whitespace
+    const cleanExpr = expr.replaceAll(/\s+/g, '')
+
+    // Match the numbers and the operator
+    // This regex looks for: (number) (operator) (number)
+    const match = /^(\d+(?:\.\d+)?)([+\-*/])(\d+(?:\.\d+)?)$/.exec(cleanExpr)
+
+    if (!match) {
+      console.warn(`Invalid expression format: ${expr}`)
+      return Number.NaN
+    }
+
+    const num1 = Number.parseFloat(match[1])
+    const operator = match[2]
+    const num2 = Number.parseFloat(match[3])
+
+    switch (operator) {
+      case '+': {
+        return num1 + num2
+      }
+      case '-': {
+        return num1 - num2
+      }
+      case '*': {
+        return num1 * num2
+      }
+      case '/': {
+        return num2 === 0 ? Infinity : num1 / num2
+      }
+      default: {
+        return Number.NaN
+      }
+    }
+  })
+}
+
+interface ScheduledGameState {
+  startAt: number
+  state: GameState
+}
 
 describe('Protected Socket Namespace lobby:start', () => {
   const server = buildTestServer()
@@ -16,6 +62,9 @@ describe('Protected Socket Namespace lobby:start', () => {
   let member: TestUserMethods<'protectedSocket' | 'me'>
 
   let users: TestUsers
+
+  let startAt: number
+  let gameState: GameState
 
   beforeAll(async () => {
     await server.init()
@@ -48,9 +97,7 @@ describe('Protected Socket Namespace lobby:start', () => {
     member.protectedSocket.emit('lobby:start')
     const error = await once<string>(member.protectedSocket, 'lobby:error')
 
-    expect(error).toEqual(
-      `User with id: ${String(member.me.id)}, is not an owner of lobby: ${String(lobbyState.id)}`
-    )
+    expect(error).toEqual(`User is not a lobby owner`)
   })
 
   it('should reject when all users are not ready', async () => {
@@ -68,39 +115,31 @@ describe('Protected Socket Namespace lobby:start', () => {
     expect(error).toEqual(`Not all lobby members are ready`)
   })
 
-  it('should start lobby countdown and emit events', async () => {
+  it('should create a game and change lobby status', async () => {
     member.protectedSocket.emit('lobby:status', 'ready')
     lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
 
-    const events: (number | string)[] = []
-    const expectedEvents = ['start', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 'end']
+    // const events: (number | string)[] = []
+    // const expectedEvents = ['start', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 'end']
 
-    owner.protectedSocket.on('lobby:start:count:start', () => {
-      events.push('start')
-    })
-    owner.protectedSocket.on('lobby:start:count:tick', (c: string) => {
-      events.push(c)
-    })
-    owner.protectedSocket.once('lobby:start:count:end', () => {
-      events.push('end')
-    })
     owner.protectedSocket.on('lobby:error', (e: unknown) => {
       throw parseError(e)
     })
+    lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
 
     // start lobby
+    const gameStatePromise = once<ScheduledGameState>(
+      member.protectedSocket,
+      'lobby:game-scheduled'
+    )
+
     owner.protectedSocket.emit('lobby:start')
     lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
-
-    // end countdown
-    lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
-
-    expect(events).toEqual(expectedEvents)
 
     expect(lobbyState).toEqual({
       id: expectLobbyId,
       ownerId: owner.me.id,
-      status: 'starting',
+      status: 'creating-game',
       maxMembers: 4,
       currentMemberCount: 2,
       members: {
@@ -114,5 +153,179 @@ describe('Protected Socket Namespace lobby:start', () => {
         },
       },
     } satisfies LobbyState)
-  }, 15_000)
+
+    const scheduledGameState = await gameStatePromise
+
+    startAt = scheduledGameState.startAt
+    gameState = scheduledGameState.state
+
+    expect(scheduledGameState).toEqual({
+      startAt: expect.any(Number) as number,
+      state: {
+        leaderboard: [owner.me.id, member.me.id],
+        status: 'scheduled',
+        questions: expect.arrayContaining([expect.any(String)]) as string[],
+        players: [
+          {
+            score: {},
+            status: 'ready',
+            user: {
+              id: owner.me.id,
+              username: owner.me.username,
+            },
+          },
+          {
+            score: {},
+            status: 'ready',
+            user: {
+              id: member.me.id,
+              username: member.me.username,
+            },
+          },
+        ],
+      },
+    } satisfies ScheduledGameState)
+  })
+
+  it('should start the game at set time', async () => {
+    gameState = await once(member.protectedSocket, 'lobby:game-started')
+
+    const startedAfter = Date.now() - startAt
+
+    expect(startedAfter).toBeGreaterThanOrEqual(0)
+    expect(startedAfter).toBeLessThanOrEqual(1000)
+  })
+
+  it('should send the game state at start', () => {
+    expect(gameState).toEqual({
+      leaderboard: [owner.me.id, member.me.id],
+      status: 'in-progress',
+      questions: expect.arrayContaining([expect.any(String)]) as string[],
+      players: [
+        {
+          score: {},
+          status: 'in-game',
+          user: {
+            id: owner.me.id,
+            username: owner.me.username,
+          },
+        },
+        {
+          score: {},
+          status: 'in-game',
+          user: {
+            id: member.me.id,
+            username: member.me.username,
+          },
+        },
+      ],
+    } satisfies GameState)
+  })
+
+  it('should response with answer_score after correct answer', async () => {
+    const correctAnswers = solveMathExpressions(gameState.questions)
+
+    member.protectedSocket.emit('lobby:game:submit-answer', {
+      index: 0,
+      answer: String(correctAnswers[0]),
+    })
+
+    interface AnswerResponse {
+      answer_score: {
+        correct: true
+        time: number
+      }
+      playerId: number
+      state: GameState
+    }
+    const response = await once<AnswerResponse>(
+      owner.protectedSocket,
+      'lobby:game-answer'
+    )
+
+    expect(response).toEqual({
+      answer_score: {
+        correct: true,
+        time: expect.any(Number) as number,
+      },
+      playerId: member.me.id,
+      state: {
+        leaderboard: [member.me.id, owner.me.id],
+        status: 'in-progress',
+        questions: expect.arrayContaining([expect.any(String)]) as string[],
+        players: [
+          {
+            score: {},
+            status: 'in-game',
+            user: {
+              id: owner.me.id,
+              username: owner.me.username,
+            },
+          },
+          {
+            score: {
+              '0': {
+                correct: true,
+                time: expect.any(Number) as number,
+              },
+            },
+            status: 'in-game',
+            user: {
+              id: member.me.id,
+              username: member.me.username,
+            },
+          },
+        ],
+      },
+    })
+
+    gameState = response.state
+  })
+
+  it('should end game after recieving all correct answers from one of the users', async () => {
+    //
+    const correctAnswers = solveMathExpressions(gameState.questions)
+
+    const statePromise = once<GameState>(
+      owner.protectedSocket,
+      'lobby:game-ended'
+    )
+
+    for (const [index, answer] of Object.entries(correctAnswers))
+      member.protectedSocket.emit('lobby:game:submit-answer', {
+        index,
+        answer: answer.toString(),
+      })
+
+    gameState = await statePromise
+
+    expect(gameState).toEqual({
+      leaderboard: [member.me.id, owner.me.id],
+      status: 'finished',
+      questions: expect.arrayContaining([expect.any(String)]) as string[],
+      players: [
+        {
+          score: {},
+          status: 'in-game',
+          user: {
+            id: owner.me.id,
+            username: owner.me.username,
+          },
+        },
+        {
+          score: Object.fromEntries(
+            correctAnswers.map((q, index) => [
+              index,
+              { correct: true, time: expect.any(Number) as number },
+            ])
+          ),
+          status: 'in-game',
+          user: {
+            id: member.me.id,
+            username: member.me.username,
+          },
+        },
+      ],
+    } satisfies GameState)
+  })
 })
