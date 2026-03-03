@@ -3,11 +3,6 @@ import type { Config } from '../types'
 import type { BASE } from '../types/config'
 import type { IPlayer } from './IPlayer'
 
-interface Score {
-  answered: number[]
-  time: number
-}
-
 class Player<
   T extends Config.PlayerTypes & { score: BASE.Score },
   TState,
@@ -44,10 +39,10 @@ class Player<
   }
 
   get isReady(): boolean {
-    return this.state === 'ready'
+    return this.status === 'ready'
   }
   get isPlaying(): boolean {
-    return this.state === 'in-game'
+    return this.status === 'in-game'
   }
 }
 

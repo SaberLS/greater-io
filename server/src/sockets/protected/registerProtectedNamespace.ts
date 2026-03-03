@@ -1,17 +1,16 @@
 import { parseError } from '@greater-io/shared'
 import type { Namespace } from 'socket.io'
-import { Lobby } from '../../services'
-import { LobbyManager } from '../../services/Lobby/LobbyManager'
-import { LobbyStore } from '../../services/Lobby/LobbyStore'
-
 import type { ISocketUser } from '../../models'
+import { Lobby } from '../../services'
 import {
   GameInstance,
   GameLobby,
+  GameLobbyManager,
   Player,
   SimpleMathEngine,
   type IPlayer,
 } from '../../services/Game'
+import { LobbyStore } from '../../services/Lobby/LobbyStore'
 import { Definition } from '../../services/Lobby/types'
 import type { LobbyUserID } from '../../services/LobbyTypesDefinition'
 import type {
@@ -30,24 +29,43 @@ function registerProtectedNamespace(
   const createPlayer = (
     user: Definition.LobbyTypes['member']['user']
   ): IPlayer<Definition.LobbyTypes['player']> => {
-    return new Player<Definition.PlayerTypes, unknown>(
+    return new Player<Definition.PlayerTypes, Definition.PlayerState>(
       user,
       {} as Definition.PlayerTypes['score'],
-      '----',
-      (): unknown => ''
+      'ready',
+      (player): Definition.PlayerState => ({
+        status: player.status,
+        score: player.score,
+        user: {
+          id: player.user.id,
+          username: player.user.username,
+        },
+      })
     )
   }
 
   const engine = new SimpleMathEngine()
 
+  const createGameState = (
+    t: GameInstance<Definition.GameTypes, Definition.GameState>
+  ): Definition.GameState => ({
+    leaderboard: t.leaderboard.map(
+      (player): Definition.GameTypes['player']['user']['id'] => player.user.id
+    ),
+    questions: t.questions.map((questions): string => questions.task),
+    status: t.status,
+    players: [...t.players.values()].map(player => player.state),
+  })
+
   const createGame = (
     users: readonly Definition.LobbyTypes['member']['user'][]
   ): Definition.LobbyTypes['game_instance'] => {
-    return new GameInstance<Definition.GameTypes>(
+    return new GameInstance<Definition.GameTypes, Definition.GameState>(
       Math.random(),
       users as ISocketUser[],
       engine,
-      createPlayer
+      createPlayer,
+      createGameState
     )
   }
 
@@ -57,13 +75,11 @@ function registerProtectedNamespace(
       Definition.LobbyMemberState
     >
   ): Definition.LobbyMemberState => ({
-    user: { id: member.user.id },
+    user: { id: member.user.id, username: member.user.username },
     status: member.status as Definition.LobbyMemberStatus,
   })
 
-  const createMember = (
-    user: Definition.LobbyUser
-  ): Lobby.Definition.LobbyMember =>
+  const createMember = (user: Definition.LobbyUser): Definition.LobbyMember =>
     new Lobby.LobbyMember<
       Lobby.Definition.MemberTypes,
       Lobby.Definition.LobbyMemberState
@@ -71,7 +87,7 @@ function registerProtectedNamespace(
 
   const membersState = (
     members: Readonly<Map<LobbyUserID, Definition.LobbyMember>>
-  ): Readonly<Record<LobbyUserID, Definition.LobbyMemberState>> => {
+  ): Definition.LobbyState['members'] => {
     const result = {} as Record<LobbyUserID, Definition.LobbyMemberState>
 
     for (const [id, member] of members.entries()) result[id] = member.state
@@ -102,11 +118,37 @@ function registerProtectedNamespace(
     )
 
   const store = new LobbyStore<Definition.LobbyTypes, Definition.Lobby>()
-  const lobbyManager: Definition.Menager = new LobbyManager<
+  const lobbyManager: Definition.Manager = new GameLobbyManager<
     Definition.LobbyTypes,
     Definition.Lobby,
     Definition.LobbyStore
   >(createLobby, store)
+
+  lobbyManager.event.on(
+    'lobby:game:scheduled',
+    ({ lobbyId, startAt, state }): void => {
+      protectedNs
+        .to(`lobby:${lobbyId}`)
+        .emit('lobby:game-scheduled', { startAt, state })
+    }
+  )
+
+  lobbyManager.event.on('lobby:game:started', ({ lobbyId, state }): void => {
+    protectedNs.to(`lobby:${lobbyId}`).emit('lobby:game-started', state)
+  })
+
+  lobbyManager.event.on('lobby:game:ended', ({ lobbyId, state }): void => {
+    protectedNs.to(`lobby:${lobbyId}`).emit('lobby:game-ended', state)
+  })
+
+  lobbyManager.event.on(
+    'lobby:game:answer',
+    ({ lobbyId, score, playerId, state }): void => {
+      protectedNs
+        .to(`lobby:${lobbyId}`)
+        .emit('lobby:game-answer', { answer_score: score, playerId, state })
+    }
+  )
   // const s = lobbyManager.close('4-4-4-4-4-4-4')
 
   // check if user exists and if user is already connected
@@ -228,38 +270,26 @@ function registerProtectedNamespace(
       )
     )
 
-    //   socket.on('lobby:start', async (): Promise<void> => {
-    //     try {
-    //       await lobbyManager.start(user, {
-    //         onStart(lobby): void {
-    //           protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:start')
+    socket.on('lobby:start', (): void => {
+      try {
+        const lobby = lobbyManager.createGame(user) // wires events and returns initial state
 
-    //           emitLobbyState(lobby)
-    //         },
-    //         onTick(count, lobby): void {
-    //           protectedNs
-    //             .to(`lobby:${lobby.id}`)
-    //             .emit('lobby:start:count:tick', 10 - count)
-    //         },
-    //         onEnd(lobby): void {
-    //           protectedNs.to(`lobby:${lobby.id}`).emit('lobby:start:count:end')
+        const lobbyRoom = `lobby:${lobby.id}`
+        protectedNs.to(lobbyRoom).emit('lobby:state', lobby)
 
-    //           emitLobbyState(lobby)
-    //         },
-    //         onAbort(lobby, reason): void {
-    //           socket.emit('lobby:start:abort', reason)
+        lobbyManager.scheduleGame(user)
+      } catch (error) {
+        socket.emit('lobby:error', parseError(error).message)
+      }
+    })
 
-    //           emitLobbyState(lobby)
-    //         },
-    //       })
-    //     } catch (error) {
-    //       socket.emit('lobby:error', parseError(error).message)
-    //     }
-    //   })
+    socket.on(
+      'lobby:game:submit-answer',
+      listenerHandler((answer: { index: number; answer: 'string' }): void => {
+        lobbyManager.submitAnswer(socket.data.user, answer) // wires events and returns initial state
+      })
+    )
   })
-
-  // -_-_-_-_-_-_ GAME -_-_-_-_-_-_
-  // socket.on('game:action', () => {})
 
   return protectedNs
 }

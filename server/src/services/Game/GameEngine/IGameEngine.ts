@@ -25,6 +25,7 @@ interface IGameEngine<
   T extends Config.GameEngineTypes,
 > extends IBaseGameEngine<T> {
   generateQuestion(amount?: number): T['question'][]
+  isFinished(scores: T['score'][], questions: T['question'][]): boolean
 }
 
 export type { IBaseGameEngine, IGameEngine }

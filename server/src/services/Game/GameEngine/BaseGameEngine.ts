@@ -25,7 +25,7 @@ interface BaseGameEnigneTypes extends Config.GameEngineTypes {
   answer_score: AnswerScore
   question: Question
   answer: string
-  score: Record<number, AnswerScore | undefined>
+  score: Record<number, AnswerScore>
   total_score: TotalScore
 }
 

@@ -15,6 +15,39 @@ class SimpleMathEngine
   implements IGameEngine<SimpleMathEngineTypes>
 {
   // ?TODO: This propably may be converted into generator function
+  private answeredAllQuestions(
+    answers: SimpleMathEngineTypes['answer_score'][],
+    questions: MathQuestion[]
+  ): boolean {
+    return answers.length === questions.length
+  }
+
+  private areCorrect(
+    answers: SimpleMathEngineTypes['answer_score'][]
+  ): boolean {
+    for (const answer of answers) if (!answer.correct) return false
+
+    return true
+  }
+
+  isFinished(
+    scores: SimpleMathEngineTypes['score'][],
+    questions: MathQuestion[]
+  ): boolean {
+    // if any scores consists all correct answers return true
+    for (const score of scores) {
+      const answers = Object.values(score)
+
+      if (
+        this.answeredAllQuestions(answers, questions) &&
+        this.areCorrect(answers)
+      )
+        return true
+    }
+
+    return false
+  }
+
   private singleQuestion(): SimpleMathEngineTypes['question'] {
     const operators = ['+', '-', '*'] as const
     const operator = operators[Math.floor(Math.random() * operators.length)]

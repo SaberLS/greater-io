@@ -10,7 +10,7 @@ class LobbyManager<
   TLobbyStore extends ILobbyStore<T, TLobby>,
 > implements ILobbyManager<T, TLobby> {
   private readonly Lobby: (user: T['member']['user']) => TLobby
-  private readonly store: TLobbyStore
+  readonly store: TLobbyStore
 
   constructor(
     Lobby: (user: T['member']['user']) => TLobby,
@@ -87,51 +87,6 @@ class LobbyManager<
     lobby.changeUserStatus(user.id, status)
     return lobby.state
   }
-
-  // start(
-  //   user: T['member']['user']
-  //   // {
-  //   //   onStart,
-  //   //   onTick,
-  //   //   onEnd,
-  //   //   onAbort,
-  //   // }: Partial<{
-  //   //   onStart: (lobby: Config.Helpers.StateOf<TLobby>) => void
-  //   //   onTick: (count: number, lobby: Config.Helpers.StateOf<TLobby>) => void
-  //   //   onEnd: (lobby: Config.Helpers.StateOf<TLobby>) => void
-  //   //   onAbort: (lobby: Config.Helpers.StateOf<TLobby>, reason: string) => void
-  //   // }>
-  // ): TLobby['state'] {
-  //   const lobby = this.store.getLobbyByUserId(user.id)
-
-  //   if (lobby === undefined)
-  //     throw new Error(`User with id: ${String(user.id)}, is not a lobby member`)
-  //   if (!lobby.isOwner(user))
-  //     throw new Error(
-  //       `User with id: ${String(user.id)}, is not an owner of lobby: ${String(lobby.id)}`
-  //     )
-
-  //   if (lobby.status === 'starting') throw new Error('Game is already starting')
-  //   if (lobby.status === 'game-in-progress')
-  //     throw new Error('Game is currently in progress')
-  //   if (!lobby.isReady) throw new Error(`Not all lobby members are ready`)
-
-  //   // await lobby.start({
-  //   //   onStart: (): void => {
-  //   //     onStart?.(lobby.state)
-  //   //   },
-  //   //   onTick: (): void => {
-  //   //     onTick?.(lobby.counterState, lobby.state)
-  //   //   },
-  //   //   onAbort:
-  //   //     onAbort === undefined ? undefined : (
-  //   //       (reason: string): void => onAbort(lobby.state, reason)
-  //   //     ),
-  //   //   onEnd: onEnd === undefined ? undefined : (): void => onEnd(lobby.state),
-  //   // })
-
-  //   return lobby.state
-  // }
 }
 
 export { LobbyManager }

@@ -1,5 +1,6 @@
 import type * as Lobby from '../../../Lobby'
 import type { IGameEngine } from '../../GameEngine/IGameEngine'
+import type { IGameInstance } from '../../GameInstance'
 import type { IGameLobbyMember } from '../../GameLobbyMember/IGameLobbyMember'
 import type * as BASE from './BASE'
 
@@ -41,12 +42,17 @@ interface GameInstance<TGame extends GameTypes> {
   id: TGame['id']
   questions: TGame['engine']['question'][]
   status: TGame['status']
+
+  get isFinished(): boolean
 }
 
-interface GameLobbyTypes<TGame extends GameTypes = GameTypes> extends Lobby
-  .Config.LobbyTypes<Omit<TGame['player'], 'score'>> {
+interface GameLobbyTypes<
+  TGame extends GameTypes<PlayerTypes<Lobby.ILobbyUser>> = GameTypes<
+    PlayerTypes<Lobby.ILobbyUser>
+  >,
+> extends Lobby.Config.LobbyTypes<Omit<TGame['player'], 'score'>> {
   game: TGame
-  game_instance: GameInstance<TGame>
+  game_instance: Lobby.Config.Statefull<IGameInstance<TGame>, object>
   status: BASE.GameLobbyStatus
   member_instance: IGameLobbyMember<TGame['player']>
 }
