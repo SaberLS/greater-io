@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Anta&display=swap');
+@import 'tailwindcss';
+
+.logo {
+  font-family: 'Anta';
+}
+
+@layer tailwind-base, primereact, tailwind-utilities;
+
+/* VITE ONLY: In "styled" mode you must add the PrimeReact Theme here. Do NOT include in "unstyled" mode */
+@import 'primereact/resources/primereact.min.css';
+@import 'primereact/resources/themes/lara-light-green/theme.css';
+@import 'primeflex/primeflex.css';
+@import 'primeicons/primeicons.css';
+
+@layer tailwind-base {
+  @import 'tailwindcss/preflight';
+}
+
+@layer tailwind-utilities {
+  @tailwind utilities;
+}
+
+*,
+*::before,
+*::after {
+  scroll-behavior: smooth;
+  box-sizing: border-box !important;
+}
+
+*:focus-visible {
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px #71f3c8,
+    0 1px 2px 0 rgb(0, 0, 0);
+  outline: 0 none;
+  outline-offset: 0;
+  border-radius: 6px;
+}
