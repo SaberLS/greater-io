@@ -1,4 +1,4 @@
-import type { LobbyState } from '../../../../../src/services'
+import type { LobbyState } from '../../../../../src/services/LobbyTypesDefinition'
 import {
   buildTestServer,
   TestUsers,
@@ -71,16 +71,16 @@ describe('Protected Socket Namespace lobby:leave', () => {
           status: 'not-ready',
         },
       },
-    } as LobbyState)
+    } satisfies LobbyState)
   })
 
   it('should transfer ownership after owner leaves', async () => {
-    await new Promise(resolve => {
+    let state: LobbyState = await new Promise(resolve => {
       patryk.protectedSocket.once('lobby:state', resolve)
       patryk.protectedSocket.emit('lobby:join', lobbyId)
     })
 
-    const state: LobbyState = await new Promise(resolve => {
+    state = await new Promise(resolve => {
       patryk.protectedSocket.once('lobby:state', resolve)
       alice.protectedSocket.emit('lobby:leave')
     })
