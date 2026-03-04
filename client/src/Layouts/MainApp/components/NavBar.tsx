@@ -1,11 +1,15 @@
 import { AnimatePresence } from 'motion/react'
 import * as motion from 'motion/react-client'
+import { useSelector } from 'react-redux'
 import { Link } from 'react-router'
 // @ts-expect-error
 import Logo from '../../../assets/Logo.svg'
-import { NavLinkButton } from '../../../common'
+import { LoginButton, NavLinkButton } from '../../../common'
+import { isLoggedIn } from '../../../store/slices'
 
 export function NavBar({ showLoginButton }: { showLoginButton: boolean }) {
+  const loggedIn = useSelector(isLoggedIn)
+
   return (
     <div className="!grid grid-cols-3 items-center w-full h-full px-4">
       {/* Logo */}
@@ -46,10 +50,17 @@ export function NavBar({ showLoginButton }: { showLoginButton: boolean }) {
             exit={{ y: -100 }}
             transition={{ type: 'spring', stiffness: 100, damping: 20 }}
           >
-            <NavLinkButton
-              label="Log in"
-              navlink={{ to: '/login' }}
-            />
+            <div className="flex gap-x-3">
+              <LoginButton />
+              {loggedIn && (
+                <NavLinkButton
+                  navlink={{
+                    to: '/logout',
+                  }}
+                  label="logout"
+                />
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
