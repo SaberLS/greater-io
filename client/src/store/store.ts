@@ -1,11 +1,17 @@
 import type { Action, ThunkAction } from '@reduxjs/toolkit'
 import { configureStore } from '@reduxjs/toolkit'
+import { api } from './api'
+import authReducer from './slices/auth/authSlice'
 import navReducer from './slices/nav/navSlice'
 
 export const store = configureStore({
   reducer: {
     nav: navReducer,
+    auth: authReducer,
+    [api.reducerPath]: api.reducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(api.middleware), // 👈 and this
 })
 
 // Infer the type of `store`
