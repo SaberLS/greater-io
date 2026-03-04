@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux'
-import { LoginButton, NavLinkButton } from '../../../../common'
+import { LoginButton, NavLinkButton, PlayButton } from '../../../../common'
 import { isLoggedIn } from '../../../../store/slices'
 import { ButtonsProps } from './types'
 
@@ -12,22 +12,7 @@ function Buttons(props: ButtonsProps) {
         ref={props.loginButtonRef}
         className="w-50"
       />
-      {loggedIn ?
-        <NavLinkButton
-          navlink={{
-            to: '/play',
-          }}
-          className="w-50"
-          label="Play!"
-        />
-      : <NavLinkButton
-          navlink={{
-            to: '/preview',
-          }}
-          className="w-50"
-          label="Give it a try!"
-        />
-      }
+      <PlayButton className="w-50" />
       <NavLinkButton
         navlink={{
           to: '/about',
