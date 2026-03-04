@@ -28,7 +28,7 @@ function NavLinkButton({
         className="p-button-label p-center"
         data-pc-section="label"
       >
-        {label && label}
+        {label}
       </span>
       {children}
     </NavLink>
@@ -36,3 +36,4 @@ function NavLinkButton({
 }
 
 export { NavLinkButton }
+export type { NavLinkButtonProps }
