@@ -1,16 +1,12 @@
-import { NavLinkButton } from '../../../../common'
+import { LoginButton, NavLinkButton } from '../../../../common'
 import { ButtonsProps } from './types'
 
 function Buttons(props: ButtonsProps) {
   return (
     <>
-      <NavLinkButton
-        navlink={{
-          to: '/login',
-        }}
+      <LoginButton
         ref={props.loginButtonRef}
         className="w-50"
-        label="Login"
       />
       <NavLinkButton
         navlink={{
@@ -38,3 +34,6 @@ function Buttons(props: ButtonsProps) {
 }
 
 export { Buttons }
+function selectIsLoggedIn(state: unknown): unknown {
+  throw new Error('Function not implemented.')
+}
