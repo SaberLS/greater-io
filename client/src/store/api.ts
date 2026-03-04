@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { AuthState } from './slices'
+import { LoginResponse } from './slices'
 import { RootState } from './store'
 
 const api = createApi({
@@ -20,7 +20,10 @@ const api = createApi({
 
 const extendedApi = api.injectEndpoints({
   endpoints: builder => ({
-    login: builder.mutation<AuthState, { username: string; password: string }>({
+    login: builder.mutation<
+      LoginResponse,
+      { username: string; password: string }
+    >({
       query: body => ({
         url: 'auth/login',
         method: 'POST',

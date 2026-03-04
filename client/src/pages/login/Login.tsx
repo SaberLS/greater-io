@@ -35,11 +35,13 @@ export function Login({
     try {
       const response = await login({ username, password }).unwrap()
 
+      console.log(response)
+
       dispatch(
         setCredentials({
-          token: response.token,
-          user: response.user,
-          expiresAt: response.expiresAt,
+          token: response.data.auth.token,
+          user: response.data.user,
+          expiresAt: response.data.auth.expiresAt,
         })
       )
 
