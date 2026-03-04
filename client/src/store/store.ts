@@ -1,6 +1,6 @@
 import type { Action, ThunkAction } from '@reduxjs/toolkit'
 import { configureStore } from '@reduxjs/toolkit'
-import navReducer from '../../../Layouts/MainApp/store/navSlice'
+import navReducer from './slices/nav/navSlice'
 
 export const store = configureStore({
   reducer: {

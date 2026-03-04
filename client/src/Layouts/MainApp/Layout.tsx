@@ -3,10 +3,10 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useIntersectionObserver } from '../../common'
 
 import { AnimatePresence, motion } from 'motion/react'
-import { useAppSelector } from '../../pages/root/store/hooks'
+import { useAppSelector } from '../../store/hooks'
+import { selectLoginVisible } from '../../store/slices/nav/navSlice'
 import { Footer, NavBar } from './components'
 import { TopPagePendingLoader } from './components/TopPendingLoader'
-import { selectLoginVisible } from './store/navSlice'
 
 function MainApp() {
   const loginVisible = useAppSelector(selectLoginVisible)

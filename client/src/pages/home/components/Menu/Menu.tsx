@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { off, on } from '../../../../Layouts/MainApp/store/navSlice'
-import { useAppDispatch } from '../../../root/store/hooks'
+import { useAppDispatch } from '../../../../store/hooks'
+import { off, on } from '../../../../store/slices/nav/navSlice'
 import { Buttons } from './Buttons'
 import { Hero } from './Hero'
 
@@ -9,6 +9,7 @@ function Menu() {
 
   const dispatch = useAppDispatch()
 
+  // TODO: Login button should not be visible on /login path
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
