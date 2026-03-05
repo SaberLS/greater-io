@@ -1,10 +1,9 @@
 import { Button } from 'primereact/button'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router'
 import { protectedSocket } from '../../services'
-import { startLobby } from '../../services/sockets'
-import { useLobbyState } from '../../services/sockets/LobbyClient'
+import { lobbyClient, useLobbyState } from '../../services/sockets/LobbyClient'
 import { selectAuth } from '../../store/slices'
 
 function LobbyView() {
@@ -12,8 +11,19 @@ function LobbyView() {
   const auth = useSelector(selectAuth)
   const currentUser = auth.user
   const me = lobby?.members[currentUser!.id]
-
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const redirectToGame = () => navigate(`/game/${lobby!.id}`)
+    protectedSocket.instance.once('lobby:game-scheduled', redirectToGame)
+
+    const cleanup = () =>
+      void protectedSocket.instance.removeListener(
+        'lobby:game-scheduled',
+        redirectToGame
+      )
+    return cleanup
+  }, [])
 
   const isInGame = useMemo(() => me!.status === 'in-game', [me!.status])
   const isReady = useMemo(() => me!.status === 'ready', [me!.status])
@@ -42,13 +52,7 @@ function LobbyView() {
     protectedSocket.instance.emit('lobby:status', possibleStatus)
   }
 
-  const onClickStartGame = async () => {
-    try {
-      const lobby = await startLobby()
-      console.log(lobby)
-      navigate(`/game/${lobby.id}`)
-    } catch (err) {}
-  }
+  const onClickStartGame = () => void lobbyClient.startLobby()
 
   if (!lobby) {
     return (
