@@ -7,7 +7,7 @@ function PlayButton(props: Partial<NavLinkButtonProps>) {
   const loggedIn = useSelector(isLoggedIn)
 
   const [label, to] = useMemo(
-    () => (loggedIn ? ['Play!', '/play'] : ['Give it a try!', '/preview']),
+    () => (loggedIn ? ['Play!', '/lobby'] : ['Give it a try!', '/preview']),
     [loggedIn]
   )
 
