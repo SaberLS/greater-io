@@ -52,6 +52,8 @@ const authSlice = createSlice({
 export const { setCredentials, logout } = authSlice.actions
 
 export const selectAuth = (state: RootState) => state.auth
+export const selectUser = (state: RootState) => selectAuth(state).user
+export const selectUserId = (state: RootState) => selectUser(state)?.id
 export const isLoggedIn = (state: RootState) =>
   state.auth.token !== null &&
   state.auth.expiresAt !== null &&
