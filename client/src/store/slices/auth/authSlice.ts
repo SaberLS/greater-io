@@ -3,12 +3,14 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '../../store'
 
 interface AuthState {
-  token: string | null
-  user: {
-    id: number
-    username: string
-  } | null
-  expiresAt: number | null
+  token: string | undefined
+  user:
+    | {
+        id: number
+        username: string
+      }
+    | undefined
+  expiresAt: number | undefined
 }
 interface LoginResponse {
   success: boolean
@@ -27,9 +29,9 @@ interface LoginResponse {
 }
 
 const initialState: AuthState = {
-  token: null,
-  user: null,
-  expiresAt: null,
+  token: undefined,
+  user: undefined,
+  expiresAt: undefined,
 }
 
 const authSlice = createSlice({
@@ -42,9 +44,9 @@ const authSlice = createSlice({
       state.user = action.payload.user
     },
     logout: state => {
-      state.token = null
-      state.expiresAt = null
-      state.user = null
+      state.token = undefined
+      state.expiresAt = undefined
+      state.user = undefined
     },
   },
 })
@@ -55,9 +57,9 @@ export const selectAuth = (state: RootState) => state.auth
 export const selectUser = (state: RootState) => selectAuth(state).user
 export const selectUserId = (state: RootState) => selectUser(state)?.id
 export const isLoggedIn = (state: RootState) =>
-  state.auth.token !== null &&
-  state.auth.expiresAt !== null &&
-  state.auth.user !== null &&
+  state.auth.token !== undefined &&
+  state.auth.expiresAt !== undefined &&
+  state.auth.user !== undefined &&
   Date.now() < state.auth.expiresAt
 
 export default authSlice.reducer

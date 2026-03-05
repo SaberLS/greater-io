@@ -103,6 +103,7 @@ async function startLobby(): Promise<LobbyState> {
 
     const onState = (state: LobbyState) => {
       cleanup()
+      console.log({ state })
       resolve(state)
     }
 

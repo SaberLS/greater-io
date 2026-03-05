@@ -1,8 +1,8 @@
 import type { ClientLoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { protectedSocket } from '../../services'
+import { lobbyClient } from '../../services/sockets/LobbyClient'
 import { store } from '../../store'
-import { setupLobbyListeners } from '../../store/slices/lobby/lobbyListeners'
 
 async function clientLoader({ request }: ClientLoaderFunctionArgs) {
   const state = store.getState()
@@ -12,7 +12,7 @@ async function clientLoader({ request }: ClientLoaderFunctionArgs) {
       if (!state.auth.token) throw new Error('No auth token')
 
       await protectedSocket.connect(state.auth.token)
-      setupLobbyListeners(store.dispatch)
+      lobbyClient.connectListeners()
     } catch {
       throw redirect('/')
     }

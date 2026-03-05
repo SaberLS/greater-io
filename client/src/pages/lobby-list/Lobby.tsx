@@ -3,7 +3,7 @@ import { FloatLabel } from 'primereact/floatlabel'
 import { InputText } from 'primereact/inputtext'
 import { FormEventHandler, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { createLobby, joinLobby } from '../../services/sockets'
+import { lobbyClient } from '../../services/sockets/LobbyClient'
 import { Layout } from './Layout'
 import { type ILobby, LobbyTable } from './LobbyTable'
 
@@ -19,7 +19,8 @@ function Lobby() {
 
   const onClickCreateLobby = async () => {
     try {
-      const lobby = await createLobby()
+      const lobby = await lobbyClient.createLobbyAndWait()
+
       navigate(`/lobby/${lobby.id}`)
     } catch (err) {}
   }
@@ -27,7 +28,8 @@ function Lobby() {
   const onSubmitjoinLobby: FormEventHandler<HTMLFormElement> = async e => {
     e.preventDefault()
     try {
-      const lobby = await joinLobby(lobbyId)
+      // TODO: lobbyId should be validated
+      const lobby = await lobbyClient.joinLobbyAndWait(lobbyId)
       navigate(`/lobby/${lobby.id}`)
     } catch (err) {}
   }

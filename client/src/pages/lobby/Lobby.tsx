@@ -1,15 +1,19 @@
 import { Button } from 'primereact/button'
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
+import { useNavigate } from 'react-router'
 import { protectedSocket } from '../../services'
-import {
-  selectCurrentLobby,
-  selectCurrentUser,
-} from '../../store/slices/lobby/lobby'
+import { startLobby } from '../../services/sockets'
+import { useLobbyState } from '../../services/sockets/LobbyClient'
+import { selectAuth } from '../../store/slices'
 
 function LobbyView() {
-  const lobby = useSelector(selectCurrentLobby)
-  const me = useSelector(selectCurrentUser)
+  const lobby = useLobbyState()
+  const auth = useSelector(selectAuth)
+  const currentUser = auth.user
+  const me = lobby?.members[currentUser!.id]
+
+  const navigate = useNavigate()
 
   const isInGame = useMemo(() => me!.status === 'in-game', [me!.status])
   const isReady = useMemo(() => me!.status === 'ready', [me!.status])
@@ -38,7 +42,13 @@ function LobbyView() {
     protectedSocket.instance.emit('lobby:status', possibleStatus)
   }
 
-  const onClickStartGame = () => {}
+  const onClickStartGame = async () => {
+    try {
+      const lobby = await startLobby()
+      console.log(lobby)
+      navigate(`/game/${lobby.id}`)
+    } catch (err) {}
+  }
 
   if (!lobby) {
     return (
