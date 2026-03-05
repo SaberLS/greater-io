@@ -8,25 +8,30 @@ interface ManagerEvents<
   T extends Config.GameLobbyTypes<
     Config.GameTypes<Config.PlayerTypes<ILobbyUser>>
   >,
+  TLobby extends Statefull<IGameLobby<T>, object>,
 > {
   'lobby:game:scheduled': {
     lobbyId: T['id']
     startAt: number
-    state: T['game_instance']['state']
+    gameState: T['game_instance']['state']
+    lobbyState: TLobby['state']
   }
   'lobby:game:started': {
     lobbyId: T['id']
-    state: T['game_instance']['state']
+    gameState: T['game_instance']['state']
+    lobbyState: TLobby['state']
   }
   'lobby:game:ended': {
     lobbyId: T['id']
-    state: T['game_instance']['state']
+    gameState: T['game_instance']['state']
+    lobbyState: TLobby['state']
   }
   'lobby:game:answer': {
     lobbyId: T['id']
     score: object // TODO should be T['engine']['answer_score']
     playerId: number
-    state: T['game_instance']['state']
+    gameState: T['game_instance']['state']
+    lobbyState: TLobby['state']
   }
 }
 
@@ -36,7 +41,7 @@ interface IGameLobbyManager<
   >,
   TLobby extends Statefull<IGameLobby<T>, object>,
 >
-  extends ILobbyManager<T, TLobby>, Emitts<ManagerEvents<T>> {
+  extends ILobbyManager<T, TLobby>, Emitts<ManagerEvents<T, TLobby>> {
   createGame(user: T['member']['user']): TLobby['state']
 
   submitAnswer(

@@ -126,27 +126,45 @@ function registerProtectedNamespace(
 
   lobbyManager.event.on(
     'lobby:game:scheduled',
-    ({ lobbyId, startAt, state }): void => {
+    ({ lobbyId, startAt, gameState, lobbyState }): void => {
+      emitLobbyState(lobbyState)
+      emitGameState(lobbyId, gameState as Definition.GameState)
+
       protectedNs
         .to(`lobby:${lobbyId}`)
-        .emit('lobby:game-scheduled', { startAt, state })
+        .emit('lobby:game-scheduled', { startAt })
     }
   )
 
-  lobbyManager.event.on('lobby:game:started', ({ lobbyId, state }): void => {
-    protectedNs.to(`lobby:${lobbyId}`).emit('lobby:game-started', state)
-  })
+  lobbyManager.event.on(
+    'lobby:game:started',
+    ({ lobbyId, gameState, lobbyState }): void => {
+      emitLobbyState(lobbyState)
+      emitGameState(lobbyId, gameState as Definition.GameState)
 
-  lobbyManager.event.on('lobby:game:ended', ({ lobbyId, state }): void => {
-    protectedNs.to(`lobby:${lobbyId}`).emit('lobby:game-ended', state)
-  })
+      protectedNs.to(`lobby:${lobbyId}`).emit('lobby:game-started')
+    }
+  )
+
+  lobbyManager.event.on(
+    'lobby:game:ended',
+    ({ lobbyId, gameState, lobbyState }): void => {
+      emitLobbyState(lobbyState)
+      emitGameState(lobbyId, gameState as Definition.GameState)
+
+      protectedNs.to(`lobby:${lobbyId}`).emit('lobby:game-ended')
+    }
+  )
 
   lobbyManager.event.on(
     'lobby:game:answer',
-    ({ lobbyId, score, playerId, state }): void => {
+    ({ lobbyId, gameState, lobbyState, score, playerId }): void => {
+      emitLobbyState(lobbyState)
+      emitGameState(lobbyId, gameState as Definition.GameState)
+
       protectedNs
         .to(`lobby:${lobbyId}`)
-        .emit('lobby:game-answer', { answer_score: score, playerId, state })
+        .emit('lobby:game-answer', { answer_score: score, playerId })
     }
   )
   // const s = lobbyManager.close('4-4-4-4-4-4-4')
@@ -167,6 +185,14 @@ function registerProtectedNamespace(
     room = `lobby:${lobby.id}`
   ): void => {
     protectedNs.to(room).emit('lobby:state', lobby)
+  }
+
+  const emitGameState = (
+    lobbyid: Definition.LobbyID,
+    game: Definition.GameState,
+    room = `lobby:${lobbyid}`
+  ): void => {
+    protectedNs.to(room).emit('lobby:game-state', game)
   }
 
   protectedNs.on('connection', (socket): void => {

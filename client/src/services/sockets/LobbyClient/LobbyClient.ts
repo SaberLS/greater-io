@@ -18,18 +18,17 @@ type LobbyState = {
   >
 }
 
+interface AnswerScore {
+  correct: boolean
+  time: number
+}
+
 type GameState = {
   leaderboard: number[]
   status: 'scheduled' | 'in-progress' | 'finished'
   questions: string[]
   players: {
-    score: Record<
-      number,
-      {
-        correct: boolean
-        time: number
-      }
-    >
+    score: Record<number, AnswerScore>
     status: 'ready' | 'in-game'
     user: {
       id: number
@@ -51,9 +50,9 @@ interface Snapshot {
 
 // TODO: paths like lobby:create/join should use ack to make use cleaner, it could allow to remove waitForLobbyState
 class LobbyClient {
-  lobbyState?: LobbyState
-  gameState?: GameState
-  startAt?: number
+  lobbyState?: Snapshot['lobbyState']
+  gameState?: Snapshot['gameState']
+  startAt?: Snapshot['startAt']
 
   listeners = new Set<() => void>()
 
@@ -94,26 +93,33 @@ class LobbyClient {
       this.updateSnapshot()
     })
 
+    socket.on('lobby:game-state', state => {
+      this.gameState = state
+      this.updateSnapshot()
+    })
+
     socket.on('lobby:game-scheduled', (data: ScheduledGameState) => {
       this.startAt = data.startAt
-      this.gameState = data.state
       this.updateSnapshot()
     })
 
-    socket.on('lobby:game-started', (state: GameState) => {
-      this.gameState = state
-      this.updateSnapshot()
-    })
+    // socket.on('lobby:game-started', () => {})
 
-    socket.on('lobby:game-answer', ({ state }: any) => {
-      this.gameState = state
-      this.updateSnapshot()
-    })
+    // socket.on(
+    //   'lobby:game-answer',
+    //   ({
+    //     answer_score: score,
+    //     playerId,
+    //   }: {
+    //     answer_score: AnswerScore
+    //     playerId: number
+    //   }) => {
 
-    socket.on('lobby:game-ended', (state: GameState) => {
-      this.gameState = state
-      this.updateSnapshot()
-    })
+    //   }
+    // )
+
+    // socket.on('lobby:game-ended', () => {
+    // })
   }
 
   createLobby() {

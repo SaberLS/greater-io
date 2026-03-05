@@ -17,9 +17,9 @@ class GameLobbyManager<
   extends LobbyManager<T, TLobby, TLobbyStore>
   implements IGameLobbyManager<T, TLobby>
 {
-  #Emitter = new Emitter<ManagerEvents<T>>()
+  #Emitter = new Emitter<ManagerEvents<T, TLobby>>()
 
-  get event(): Emitter<ManagerEvents<T>> {
+  get event(): Emitter<ManagerEvents<T, TLobby>> {
     return this.#Emitter
   }
 
@@ -31,7 +31,8 @@ class GameLobbyManager<
       this.#Emitter.emit('lobby:game:scheduled', {
         lobbyId: lobby.id,
         startAt,
-        state: lobby.gameInstance.state,
+        gameState: lobby.gameInstance.state,
+        lobbyState: lobby.state,
       })
     })
 
@@ -40,7 +41,8 @@ class GameLobbyManager<
         throw new Error(`Game doesn't exist in this lobby`)
       this.#Emitter.emit('lobby:game:started', {
         lobbyId: lobby.id,
-        state: lobby.gameInstance.state,
+        gameState: lobby.gameInstance.state,
+        lobbyState: lobby.state,
       })
     })
 
@@ -49,7 +51,8 @@ class GameLobbyManager<
         throw new Error(`Game doesn't exist in this lobby`)
       this.#Emitter.emit('lobby:game:ended', {
         lobbyId: lobby.id,
-        state: lobby.gameInstance.state,
+        gameState: lobby.gameInstance.state,
+        lobbyState: lobby.state,
       })
     })
   }
