@@ -1,11 +1,7 @@
-import { useSelector } from 'react-redux'
 import { LoginButton, NavLinkButton, PlayButton } from '../../../../common'
-import { isLoggedIn } from '../../../../store/slices'
 import { ButtonsProps } from './types'
 
 function Buttons(props: ButtonsProps) {
-  const loggedIn = useSelector(isLoggedIn)
-
   return (
     <>
       <LoginButton
