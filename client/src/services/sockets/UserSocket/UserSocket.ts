@@ -1,47 +1,60 @@
 import { Socket } from 'socket.io-client'
 
-class UserSocket<TCreatorParams extends unknown[]> {
-  #socket: Socket | undefined
-  protected _connectingPromise: Promise<Socket> | undefined
+class UserSocket<TCreatorParams extends unknown[]> implements IUserSocket {
+  protected _socket: Socket | undefined
+  protected _connectingPromise: Promise<void> | undefined
   protected _createSocket: (...args: TCreatorParams) => Socket
 
   constructor(createSocket: (...args: TCreatorParams) => Socket) {
     this._createSocket = createSocket
   }
 
-  async connect(...createArgs: TCreatorParams): Promise<Socket> {
-    if (this._connectingPromise) return this._connectingPromise
-    if (this.#socket?.connected) return this.#socket
+  async connect(...createArgs: TCreatorParams): Promise<void> {
+    if (this._socket?.connected) return
+    if (this._connectingPromise) return
 
-    this.#socket = await new Promise<Socket>((resolve, reject) => {
+    this._connectingPromise = new Promise<void>((resolve, reject) => {
       const socket = this._createSocket(...createArgs)
 
       socket.once('connect', () => {
+        this._socket = socket
         this._connectingPromise = undefined
-        socket.removeListener('connect_error', reject)
-        resolve(socket)
+        resolve()
       })
 
-      socket.once('connect_error', () => {
+      socket.once('connect_error', err => {
         this._connectingPromise = undefined
-        reject()
+        reject(err)
       })
     })
 
-    return this.#socket
+    return this._connectingPromise
   }
 
-  disconnect() {
-    this.#socket?.disconnect()
-    this.#socket = undefined
+  disconnect(): void {
+    this._socket?.disconnect()
+    this._socket = undefined
   }
 
-  get socket(): Socket {
-    if (this.#socket === undefined) throw new Error('Socket not defined')
-    if (!this.#socket.connected) throw new Error('Socket not connected')
+  get isConnected(): boolean {
+    return Boolean(this._socket?.connected)
+  }
 
-    return this.#socket
+  get instance(): Socket {
+    if (this._socket === undefined) throw new Error('Socket not defined')
+    if (!this._socket.connected) throw new Error('Socket not connected')
+
+    return this._socket
   }
 }
 
+interface IUserSocket {
+  get instance(): Socket
+  get isConnected(): boolean
+
+  disconnect(): void
+  connect(): Promise<void>
+}
+
 export { UserSocket }
+export type { IUserSocket }
