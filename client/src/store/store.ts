@@ -2,12 +2,14 @@ import type { Action, ThunkAction } from '@reduxjs/toolkit'
 import { configureStore } from '@reduxjs/toolkit'
 import { api } from './api'
 import authReducer from './slices/auth/authSlice'
+import lobbyReducer from './slices/lobby/lobby'
 import navReducer from './slices/nav/navSlice'
 
 export const store = configureStore({
   reducer: {
     nav: navReducer,
     auth: authReducer,
+    lobby: lobbyReducer,
     [api.reducerPath]: api.reducer,
   },
   middleware: getDefaultMiddleware =>
