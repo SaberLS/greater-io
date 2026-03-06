@@ -17,7 +17,11 @@ export default [
     ]),
   ]),
   layout('protected.ts', [
-    layout('connectSocket.ts', [route('lobby/:lobbyId', 'lobby/lobby.ts')]),
+    layout('connectSocket.ts', [
+      route('lobby/:lobbyId', 'lobby/lobby.ts'),
+      route('game/:lobbyId', 'lobby/game.ts'),
+      route('game/:lobbyId/result', 'lobby/result.ts'),
+    ]),
   ]),
 
   route('*', 'Catchall.tsx'),
