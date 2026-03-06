@@ -54,7 +54,9 @@ function registerProtectedNamespace(
     ),
     questions: t.questions.map((questions): string => questions.task),
     status: t.status,
-    players: [...t.players.values()].map(player => player.state),
+    players: Object.fromEntries(
+      [...t.players.values()].map(player => [player.user.id, player.state])
+    ),
   })
 
   const createGame = (
