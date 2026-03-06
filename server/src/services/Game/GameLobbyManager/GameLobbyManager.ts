@@ -104,7 +104,8 @@ class GameLobbyManager<
       playerId: user.id,
       lobbyId: lobby.id,
       score,
-      state: lobby.gameInstance.state,
+      gameState: lobby.gameInstance.state,
+      lobbyState: lobby.state,
     })
 
     return lobby
