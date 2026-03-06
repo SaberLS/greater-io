@@ -61,7 +61,7 @@ interface GameState {
   leaderboard: GameTypes['player']['user']['id'][]
   status: GameTypes['status']
   questions: Game.MathQuestion['task'][]
-  players: PlayerState[]
+  players: Record<GameTypes['player']['user']['id'], PlayerState>
 }
 
 type Lobby = Config.Statefull<Game.IGameLobby<LobbyTypes>, LobbyState>
