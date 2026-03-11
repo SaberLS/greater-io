@@ -8,7 +8,6 @@ import {
   GameLobbyManager,
   Player,
   SimpleMathEngine,
-  type IPlayer,
 } from '../../services/Game'
 import { LobbyStore } from '../../services/Lobby/LobbyStore'
 import { Definition } from '../../services/Lobby/types'
@@ -28,10 +27,10 @@ function registerProtectedNamespace(
 
   const createPlayer = (
     user: Definition.LobbyTypes['member']['user']
-  ): IPlayer<Definition.LobbyTypes['player']> => {
+  ): Definition.Player => {
     return new Player<Definition.PlayerTypes, Definition.PlayerState>(
       user,
-      {} as Definition.PlayerTypes['score'],
+      {},
       'ready',
       (player): Definition.PlayerState => ({
         status: player.status,
@@ -56,7 +55,6 @@ function registerProtectedNamespace(
     status: t.status,
     players: Object.fromEntries(
       [...t.players.values()].map(
-        // TODO: fix types player state types gets extended to any somewhere in GameState
         (player): [Definition.LobbyUserID, Definition.PlayerState] => [
           player.user.id,
           player.state,

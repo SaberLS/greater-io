@@ -43,7 +43,14 @@ interface PlayerState {
   status: PlayerTypes['status']
 }
 
-type GameTypes = Game.Config.GameTypes<PlayerTypes, GameEngineTypes>
+type Player = Statefull<Game.IPlayer<PlayerTypes>, PlayerState>
+
+interface GameTypes extends Game.Config.GameTypes<
+  PlayerTypes,
+  GameEngineTypes
+> {
+  player_instance: Player
+}
 
 interface LobbyTypes extends Game.Config.GameLobbyTypes<GameTypes> {
   id: LobbyID
@@ -52,7 +59,7 @@ interface LobbyTypes extends Game.Config.GameLobbyTypes<GameTypes> {
   member_instance: LobbyMember
   game: GameTypes
   player: PlayerTypes
-  player_instance: Statefull<Game.IPlayer<PlayerTypes>, PlayerState>
+  player_instance: Player
 }
 
 type LobbyState = ILobbyState<LobbyTypes>
@@ -86,6 +93,7 @@ export type {
   LobbyUserState,
   Manager,
   MemberTypes,
+  Player,
   PlayerState,
   PlayerTypes,
 }
