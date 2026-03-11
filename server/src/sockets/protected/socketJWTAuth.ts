@@ -6,7 +6,7 @@ import type { IoSocketBeforeAuth } from '../../types/AuthSocket'
 async function socketJwtAuth(
   socket: IoSocketBeforeAuth,
   next: (err?: Error) => void
-) {
+): Promise<void> {
   const token = socket.handshake.auth?.token
   if (!token) return next(new Error('Unauthorized'))
 

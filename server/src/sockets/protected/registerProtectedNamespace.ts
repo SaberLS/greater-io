@@ -55,7 +55,13 @@ function registerProtectedNamespace(
     questions: t.questions.map((questions): string => questions.task),
     status: t.status,
     players: Object.fromEntries(
-      [...t.players.values()].map(player => [player.user.id, player.state])
+      [...t.players.values()].map(
+        // TODO: fix types player state types gets extended to any somewhere in GameState
+        (player): [Definition.LobbyUserID, Definition.PlayerState] => [
+          player.user.id,
+          player.state,
+        ]
+      )
     ),
   })
 

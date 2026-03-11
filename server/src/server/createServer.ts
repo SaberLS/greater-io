@@ -11,7 +11,6 @@ const createServer = (): ServerBundle => {
 
   const app: Express = createApp({ cors: optionsCors })
   // The error on createHttpServer(app) is just a side effect — ESLint sees that somewhere inside app there’s a promise-returning handler, and it bubbles up.
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const httpServer: Server = createHttpServer(app)
   const io: IoServer = createIoServer(httpServer, {
     cors: optionsCors,

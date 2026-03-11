@@ -1,5 +1,5 @@
 import type { IUserDBO } from './IUserDBO'
 
-interface IUser extends Omit<IUserDBO, 'password' | 'tokenVersion'> {}
+type IUser = Omit<IUserDBO, 'password' | 'tokenVersion'>
 
 export { type IUser }

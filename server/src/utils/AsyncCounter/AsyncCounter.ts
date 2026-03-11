@@ -21,11 +21,11 @@ class AsyncCounter<TAbortReason> {
     this.#limit = limit
   }
 
-  get isRunning() {
+  get isRunning(): boolean {
     return this.#intervalId !== undefined
   }
 
-  #clear() {
+  #clear(): void {
     clearInterval(this.#intervalId)
     this.#intervalId = undefined
     this.#state = 0
@@ -34,7 +34,7 @@ class AsyncCounter<TAbortReason> {
   #resolveOnce = (
     reason: ResolveReason,
     resolve: (value: ResolveReason | PromiseLike<ResolveReason>) => void
-  ) => {
+  ): void => {
     if (this.#done) return
 
     this.#done = true
@@ -49,21 +49,21 @@ class AsyncCounter<TAbortReason> {
       throw new Error('AsyncCounter is already running')
     }
 
-    return new Promise<ResolveReason>((resolve, reject) => {
+    return new Promise<ResolveReason>((resolve, reject): void => {
       this.#done = false
 
-      const cleanup = () => {
+      const cleanup = (): void => {
         this.#clear()
         signal.removeEventListener('abort', onSignalAbort)
       }
 
-      const end = () => {
+      const end = (): void => {
         cleanup()
         onEnd?.()
         this.#resolveOnce('finished', resolve)
       }
 
-      const onSignalAbort = () => {
+      const onSignalAbort = (): void => {
         onAbort?.(signal.reason)
         cleanup()
         this.#resolveOnce('aborted', resolve)
@@ -74,7 +74,7 @@ class AsyncCounter<TAbortReason> {
       onStart?.()
 
       signal.addEventListener('abort', onSignalAbort)
-      this.#intervalId = setInterval(() => {
+      this.#intervalId = setInterval((): void => {
         try {
           if (signal.aborted) return onSignalAbort()
 
@@ -90,15 +90,15 @@ class AsyncCounter<TAbortReason> {
     })
   }
 
-  get state() {
+  get state(): number {
     return this.#state
   }
 
-  get delay() {
+  get delay(): number {
     return this.#delay
   }
 
-  get limit() {
+  get limit(): number {
     return this.#limit
   }
 }

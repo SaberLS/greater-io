@@ -3,7 +3,7 @@ import MESSAGES from '../../../CONSTS/MESSAGES.json'
 import type { IApiResponse } from '../../../models'
 
 type HealthResponse = IApiResponse<never>
-function healthController(req: Request, res: Response) {
+function healthController(req: Request, res: Response): void {
   res.json({
     success: true,
     message: MESSAGES.public.health[200],

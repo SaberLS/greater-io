@@ -15,7 +15,7 @@ const logoutController: RequestHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   try {
     if (req.user?.id === undefined) {
       return void res.status(401).json({

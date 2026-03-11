@@ -32,20 +32,23 @@ class UserRepository implements IUserRepository {
     })
   }
 
-  async getUserById(id: IUserDBO['id']): Promise<IUserDBO | undefined> {
-    return this.store.get(id)
+  getUserById(id: IUserDBO['id']): Promise<IUserDBO | undefined> {
+    return new Promise((resolve): void => resolve(this.store.get(id)))
   }
 
-  async getUserByUsername(
+  getUserByUsername(
     username: IUserDBO['username']
   ): Promise<IUserDBO | undefined> {
-    for (const { 1: user } of this.store)
-      if (user.username === username) return user
+    return new Promise((resolve): void => {
+      for (const { 1: user } of this.store)
+        if (user.username === username) resolve(user)
 
-    return undefined
+      // eslint-disable-next-line unicorn/no-useless-undefined
+      return resolve(undefined)
+    })
   }
 
-  incrementTokenVersion(id: number) {
+  incrementTokenVersion(id: number): number | undefined {
     const user = this.store.get(id)
     if (user) return user.tokenVersion++
   }

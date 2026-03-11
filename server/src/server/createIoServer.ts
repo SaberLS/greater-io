@@ -1,13 +1,13 @@
 import type { CorsOptions } from 'cors'
 import { type Server as HttpServer } from 'node:http'
-import { Server as IoServer } from 'socket.io'
+import { Server as IoServer, type DefaultEventsMap } from 'socket.io'
 import { Server } from '../server/instance'
 import { registerProtectedNamespace, registerPublicNamespace } from '../sockets'
 
 const createIoServer = (
   httpServer: HttpServer,
   options: CreateSocketOptions
-) => {
+): IoServer<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, unknown> => {
   Server.io = new IoServer(httpServer, {
     cors: options.cors,
   })

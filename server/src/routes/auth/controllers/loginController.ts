@@ -15,7 +15,11 @@ interface LoginData {
 
 type LoginResponse = IApiResponse<LoginData>
 
-const loginController = (req: Request, res: Response, next: NextFunction) => {
+const loginController = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   passport.authenticate(
     'local',
@@ -23,7 +27,7 @@ const loginController = (req: Request, res: Response, next: NextFunction) => {
       error_: unknown,
       user: IUserDBO | undefined
       // info: { message: string }
-    ) => {
+    ): void | Response<unknown, Record<string, unknown>> => {
       try {
         if (error_) return next(error_)
         if (!user) {

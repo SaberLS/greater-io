@@ -9,7 +9,7 @@ import type {
 
 type MeResponse = IApiResponse<IUser>
 
-function meController(req: Request, res: Response) {
+function meController(req: Request, res: Response): void {
   if (req.user) {
     res.json({
       success: true,

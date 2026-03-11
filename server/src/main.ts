@@ -1,6 +1,7 @@
 import { failure, info, Logger, parseError } from '@greater-io/shared'
 import { createServer, startServer } from './server'
 import { closeServer } from './server/closeServer'
+import type { ServerBundle } from './types/serverBundle'
 
 interface Config {
   port?: number
@@ -14,7 +15,7 @@ const defaultConfig: Config = {
   isProd: false,
 }
 
-const main = async (config?: Partial<Config>) => {
+const main = async (config?: Partial<Config>): Promise<ServerBundle> => {
   const {
     isProd = defaultConfig.isProd,
     silent = defaultConfig.silent,
@@ -28,15 +29,17 @@ const main = async (config?: Partial<Config>) => {
     await startServer(bundle, port)
 
     // Graceful shutdown
-    const close = async () => {
+    const close = async (): Promise<void> => {
       info('Shutting down...')
+
       await closeServer(bundle)
-      process.exit(0)
+
+      info('Server closed')
     }
 
     if (process.listenerCount('SIGINT') === 0) {
-      process.on('SIGINT', close)
-      process.on('SIGTERM', close)
+      process.on('SIGINT', (): void => void close())
+      process.on('SIGTERM', (): void => void close())
     }
 
     return bundle

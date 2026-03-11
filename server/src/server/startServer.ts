@@ -5,16 +5,16 @@ import { getUrl } from '../utils/getUrl'
 const startServer = async (
   { httpServer, app, io }: ServerBundle,
   port?: number
-) => {
-  return new Promise(resolve => {
-    httpServer.listen(port, () => {
+): Promise<ServerBundle> => {
+  return new Promise((resolve): void => {
+    httpServer.listen(port, (): void => {
       const url = getUrl(httpServer)
 
       success(`Server is running!`, `${url}`)
       resolve({ httpServer, app, io })
     })
 
-    httpServer.on('error', (error_: unknown) => {
+    httpServer.on('error', (error_: unknown): void => {
       const error =
         error_ instanceof Error ? error_ : (
           new Error('Unknown Error', {

@@ -1,7 +1,7 @@
 import { warn } from '@greater-io/shared'
 import type { Server } from 'node:http'
 
-const getUrl = (httpServer: Server) => {
+const getUrl = (httpServer: Server): string => {
   const address = httpServer.address()
 
   let url: string

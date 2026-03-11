@@ -6,7 +6,7 @@ interface TypedController<TS> extends AbortController {
   signal: TypedSignal<TS>
 }
 
-const createAbortController = <T>() => {
+const createAbortController = <T>(): TypedController<T> => {
   return new AbortController() as TypedController<T>
 }
 

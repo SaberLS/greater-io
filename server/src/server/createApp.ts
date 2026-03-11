@@ -1,9 +1,10 @@
 import cors, { type CorsOptions } from 'cors'
+import type { Express } from 'express'
 import express from 'express'
 import passport from 'passport'
 import { authRouter, protectedRouter, publicRouter } from '../routes'
 
-const createApp = (options: CreateAppArgs) => {
+const createApp = (options: CreateAppArgs): Express => {
   const app = express()
 
   // Middlewares
@@ -17,7 +18,8 @@ const createApp = (options: CreateAppArgs) => {
   app.use('/protected', protectedRouter)
 
   // Catch-all for unknown routes
-  app.use((req, res) => {
+  // @ts-expect-error ignore req is never used
+  app.use((req, res): void => {
     res.status(404).json({
       success: false,
       message: 'Route not found',
