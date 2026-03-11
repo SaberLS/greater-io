@@ -114,8 +114,6 @@ describe('Protected Socket Namespace lobby:start', () => {
     member.protectedSocket.emit('lobby:status', 'ready')
     lobbyState = await once<LobbyState>(member.protectedSocket, 'lobby:state')
 
-    console.log(lobbyState)
-
     // const events: (number | string)[] = []
     // const expectedEvents = ['start', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 'end']
 
