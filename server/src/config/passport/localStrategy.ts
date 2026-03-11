@@ -9,27 +9,25 @@ const localStrategy = new LocalStrategy(
     usernameField: 'username',
     passwordField: 'password',
   },
-  (...args) => {
-    void localVerify(...args)
-  }
+  (...args): void => void localVerify(...args)
 )
 
 const localVerify = async (
   ...[username, password, done]: Parameters<VerifyFunction>
-) => {
+): Promise<void> => {
   try {
     const user = await userRepository.getUserByUsername(username)
     if (!user)
-      return void done(undefined, false, { message: MESSAGES.auth.login[401] })
+      return done(undefined, false, { message: MESSAGES.auth.login[401] })
 
     const ok = await bcrypt.compare(password, user.password)
     if (!ok)
-      return void done(undefined, false, { message: MESSAGES.auth.login[401] })
+      return done(undefined, false, { message: MESSAGES.auth.login[401] })
 
     log('authentication OK', { username })
-    return void done(undefined, user, { message: MESSAGES.auth.login[200] })
+    return done(undefined, user, { message: MESSAGES.auth.login[200] })
   } catch (error) {
-    return void done(error)
+    return done(error)
   }
 }
 
