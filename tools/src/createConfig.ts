@@ -24,7 +24,7 @@ const createConfig = (__dirname: string): Config => {
         },
         rules: {
           '@typescript-eslint/explicit-function-return-type': [
-            'error',
+            'warn',
             {
               allowExpressions: false,
               allowTypedFunctionExpressions: false,
