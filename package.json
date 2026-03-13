@@ -16,7 +16,7 @@
     "clean:restart": "pnpm clean:all && pnpm --filter shared install && pnpm build:shared && pnpm install",
     "clean:server": "pnpm --filter server clean",
     "clean:shared": "pnpm --filter shared clean",
-    "dev": "concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev": "pnpm --filter shared build && concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
     "dev:client": "pnpm --filter client dev",
     "dev:server": "pnpm --filter server dev",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
