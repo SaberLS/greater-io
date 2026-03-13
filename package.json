@@ -25,10 +25,8 @@
     "lint:fix": "eslint --fix \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "prepare": "husky",
     "start:server": "pnpm --filter server start",
-    "test": "concurrently \"pnpm --filter server test\" \"pnpm --filter client test\"",
-    "test:client": "pnpm --filter client test",
-    "test:server": "pnpm --filter server test",
-    "test:watch": "concurrently \"pnpm --filter server test:watch\" \"pnpm --filter client test:watch\""
+    "test": "pnpm test:server",
+    "test:server": "pnpm --filter server test"
   },
   "lint-staged": {
     "*.{ts,mts,cts,tsx,js,mjs,cjs,jsx}": [
