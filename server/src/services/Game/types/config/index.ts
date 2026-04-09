@@ -1,2 +1,5 @@
-export * as BASE from './BASE'
-export * from './Config'
+export * from './GameEngineInstance'
+export * from './GameInstance'
+export * from './GameLobbyInstance'
+export * from './GameMemberInstance'
+export * from './PlayerInstance'

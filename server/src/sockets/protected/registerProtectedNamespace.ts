@@ -25,9 +25,7 @@ function registerProtectedNamespace(
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const protectedNs = namespace.use(socketJwtAuth) as IoAuthenticatedNamespace
 
-  const createPlayer = (
-    user: Definition.LobbyTypes['member']['user']
-  ): Definition.Player => {
+  const createPlayer = (user: Definition.LobbyUser): Definition.Player => {
     return new Player<Definition.PlayerTypes, Definition.PlayerState>(
       user,
       {},
@@ -49,9 +47,9 @@ function registerProtectedNamespace(
     t: GameInstance<Definition.GameTypes, Definition.GameState>
   ): Definition.GameState => ({
     leaderboard: t.leaderboard.map(
-      (player): Definition.GameTypes['player']['user']['id'] => player.user.id
+      (player): Definition.LobbyUserID => player.user.id
     ),
-    questions: t.questions.map((questions): string => questions.task),
+    questions: t.problems.map((questions): string => questions.task),
     status: t.status,
     players: Object.fromEntries(
       [...t.players.values()].map(
@@ -64,7 +62,7 @@ function registerProtectedNamespace(
   })
 
   const createGame = (
-    users: readonly Definition.LobbyTypes['member']['user'][]
+    users: readonly Definition.LobbyUser[]
   ): Definition.LobbyTypes['game_instance'] => {
     return new GameInstance<Definition.GameTypes, Definition.GameState>(
       Math.random(),

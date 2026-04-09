@@ -1,61 +1,69 @@
-import { Emitter } from '../../../utils'
-import * as Lobby from '../../Lobby'
+import type { SourceOfCtx, SourceOfEvents } from '../../../utils'
+import { Lobby } from '../../Lobby'
 import type { Config } from '../types'
-import type { GameLobbyEvents, IGameLobby } from './IGameLobby'
+import type {
+  GameCtx,
+  GameLobbyCtx,
+  GameMemberCtx,
+  PlayerCtx,
+} from '../types/config'
 
 class GameLobby<
-  T extends Config.GameLobbyTypes<
-    Config.GameTypes<Config.PlayerTypes<Lobby.ILobbyUser>>
-  >,
-  TState,
+  TData extends Config.GameLobbyTypes,
+  TGameMemberCtx extends GameMemberCtx<TData['game']['player']['member']>,
+  TGamePlayerCtx extends PlayerCtx<TData['game']['player'], TGameMemberCtx>,
+  TGameCtx extends GameCtx<TData['game'], TGameMemberCtx, TGamePlayerCtx>,
+  TGameLobbyCtx extends GameLobbyCtx<TData, TGameMemberCtx>,
 >
-  extends Lobby.Lobby<T, TState>
-  implements IGameLobby<T>
+  extends Lobby<TData, TGameMemberCtx, TGameLobbyCtx>
+  implements
+    SourceOfEvents<
+      Config.GameLobbyInstance<TData, SourceOfCtx<TGameMemberCtx>>,
+      Config.GameLobbyEvents<TData, SourceOfCtx<TGameMemberCtx>> &
+        TGameLobbyCtx['events']
+    >
 {
-  gameInstance: T['game_instance'] | undefined
-  #createGame: (
-    users: readonly T['member']['user'][]
-    // rules: T['game']['rules']
-  ) => T['game_instance']
-
-  #Emitter = new Emitter<GameLobbyEvents>()
-
-  get event(): Emitter<GameLobbyEvents> {
-    return this.#Emitter
+  attemptStart(): void {
+    throw new Error('Method not implemented.')
   }
+  gameInstance: SourceOfCtx<TGameCtx> | undefined
+  protected _createGame: (
+    members: SourceOfCtx<TGameMemberCtx>[]
+  ) => SourceOfCtx<TGameCtx>
 
   constructor(
     createGame: (
-      users: readonly T['member']['user'][]
-      // rules: T['game']['rules']
-    ) => T['game_instance'],
-    ...superArgs: ConstructorParameters<typeof Lobby.Lobby<T, TState>>
+      members: SourceOfCtx<TGameMemberCtx>[]
+    ) => SourceOfCtx<TGameCtx>,
+    ...superArgs: ConstructorParameters<
+      typeof Lobby<TData, TGameMemberCtx, TGameLobbyCtx>
+    >
   ) {
     super(...superArgs)
-    this.#createGame = createGame
+    this._createGame = createGame
   }
 
-  private attachGameHandlers(game: T['game_instance']): void {
-    game.event.on('scheduled', (payload): void => {
+  protected attachGameHandlers(game: SourceOfCtx<TGameCtx>): void {
+    game.on('scheduled', (ev): void => {
       this.status = 'game-in-progress'
       for (const member of this._members.values()) member.status = 'in-game'
 
-      this.#Emitter.emit('game:scheduled', payload)
+      this.emit('game:scheduled', { payload: ev.payload })
     })
 
-    game.event.on('started', (): void => {
-      this.#Emitter.emit('game:started')
+    game.on('started', (): void => {
+      this.emit('game:started', { payload: undefined })
     })
 
-    game.event.on('ended', (): void => {
+    game.on('ended', (): void => {
       for (const member of this._members.values()) member.status = 'not-ready'
       this.status = 'closed'
 
-      this.#Emitter.emit('game:ended')
+      this.emit('game:ended', { payload: undefined })
     })
 
-    game.event.on('answer', (payload): void => {
-      this.#Emitter.emit('game:answer', payload)
+    game.on('answer', (ev): void => {
+      this.emit('game:answer', ev.payload)
     })
   }
 
@@ -67,7 +75,7 @@ class GameLobby<
       if (this.gameInstance !== undefined && !this.gameInstance.isFinished)
         throw new Error('Game is in progress')
 
-      this.gameInstance = this.#createGame(this.users)
+      this.gameInstance = this._createGame([...this.members.values()])
       this.attachGameHandlers(this.gameInstance)
     } catch (error) {
       this.status = prevStatus

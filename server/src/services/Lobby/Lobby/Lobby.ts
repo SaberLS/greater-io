@@ -1,58 +1,110 @@
+import {
+  EventSource,
+  type AppendTarget,
+  type Handler,
+  type SourceCtx,
+  type SourceOfCtx,
+  type SourceOfEvents,
+} from '../../../utils'
 import type { Config } from '../types'
-import type { ILobby, LobbyBaseTypes } from './ILobby'
 
-class Lobby<T extends LobbyBaseTypes, TState> implements Config.Statefull<
-  ILobby<T>,
-  TState
-> {
-  #id: T['id']
-  #owner: T['member']['user'] | undefined
+interface MemberCtx<TData extends Config.BASE.MemberTypes> extends SourceCtx {
+  readonly instance: Config.BASE.MemberInstance<TData>
+  readonly events: Config.BASE.MemberEvents<TData>
+}
+
+interface LobbyCtx<
+  TData extends Config.BASE.LobbyTypes,
+  TMemberCtx extends MemberCtx<TData['member']>,
+> extends SourceCtx {
+  readonly instance: Config.BASE.LobbyInstance<TData, SourceOfCtx<TMemberCtx>>
+  readonly events: Config.BASE.LobbyEvents<TData, SourceOfCtx<TMemberCtx>>
+}
+
+class Lobby<
+  TData extends Config.BASE.LobbyTypes,
+  TMemberCtx extends MemberCtx<TData['member']>,
+  TLobbyCtx extends LobbyCtx<TData, TMemberCtx>,
+>
+  extends EventSource<
+    Config.BASE.LobbyEvents<TData, SourceOfCtx<TMemberCtx>> &
+      TLobbyCtx['events'],
+    TLobbyCtx['instance']
+  >
+  implements
+    SourceOfEvents<
+      Config.BASE.LobbyInstance<TData, SourceOfCtx<TMemberCtx>>,
+      Config.BASE.LobbyEvents<TData, SourceOfCtx<TMemberCtx>> &
+        TLobbyCtx['events']
+    >
+{
+  protected _id: SourceOfCtx<TLobbyCtx>['id']
+  protected _owner: SourceOfCtx<TMemberCtx> | undefined
   protected readonly _members = new Map<
-    T['member']['user']['id'],
-    T['member_instance']
+    SourceOfCtx<TMemberCtx>['id'],
+    SourceOfCtx<TMemberCtx>
   >()
-  #status: T['status']
-  #maxMembers: number
+  protected _status: TData['status']
+  protected _maxMembers: number
 
-  #createState: (t: Lobby<T, TState>) => TState
   private readonly createMember: (
-    user: T['member']['user']
-  ) => T['member_instance']
+    user: SourceOfCtx<TMemberCtx>['user']
+  ) => SourceOfCtx<TMemberCtx>
+
+  protected onMemberStatusChange: Handler<
+    AppendTarget<TMemberCtx['events'], SourceOfCtx<TMemberCtx>>,
+    'status-changed'
+  > = (s): void => {
+    this.emit('member:status-changed', {
+      payload: {
+        ...s.payload,
+        member: s.target,
+      },
+    })
+  }
 
   constructor(
-    id: T['id'],
-    owner: T['member']['user'],
-    createMember: (user: T['member']['user']) => T['member_instance'],
-    createState: (t: Lobby<T, TState>) => TState,
+    id: TData['id'],
+    owner: TData['member']['user'],
+    createMember: (user: TData['member']['user']) => SourceOfCtx<TMemberCtx>,
     maxMembers = 4
   ) {
+    super()
     this.createMember = createMember
-    this.#createState = createState
+    const memberOwner = createMember(owner)
 
-    this._members.set(owner.id, this.createMember(owner))
+    this._owner = memberOwner
+    this._status = 'open'
+    this._id = id
+    this._maxMembers = maxMembers
+  }
 
-    this.#owner = owner
-    this.#status = 'open'
-    this.#id = id
-    this.#maxMembers = maxMembers
+  changeUserStatus(
+    userId: TData['member']['user']['id'],
+    status: TData['member']['status']
+  ): void {
+    const member = this._members.get(userId)
+
+    if (member === undefined) throw new Error(`User is not a lobby member`)
+    member.status = status
   }
 
   close(): void {
-    this.#status = 'closed'
+    this.status = 'closed'
   }
 
-  isOwner(user: T['member']['user']): boolean {
-    return user.id === this.owner?.id
+  isOwner(userId: TData['member']['user']['id']): boolean {
+    return userId === this.owner?.id
   }
 
   get members(): Readonly<
-    Map<T['member']['user']['id'], T['member_instance']>
+    Map<TData['member']['user']['id'], SourceOfCtx<TMemberCtx>>
   > {
-    return Object.freeze(new Map(this._members))
+    return this._members
   }
 
-  get users(): readonly T['member']['user'][] {
-    const users: T['member']['user'][] = []
+  get users(): readonly TData['member']['user'][] {
+    const users: TData['member']['user'][] = []
 
     for (const member of this._members.values()) users.push(member.user)
 
@@ -63,81 +115,93 @@ class Lobby<T extends LobbyBaseTypes, TState> implements Config.Statefull<
     return this._members.size === 0
   }
 
-  remove(user: T['member']['user']): void {
-    this._members.delete(user.id)
+  remove(userId: TData['member']['user']['id']): void {
+    const member = this.members.get(userId)
+    if (member === undefined) return
 
-    if (this.isOwner(user)) this.passOwnership()
+    this.members.delete(userId)
+
+    this.emit('removed-member', { payload: { removedMember: member } })
+    if (this.isOwner(userId)) this.passOwnership()
   }
 
   passOwnership(): void {
-    this.owner = this._members.values().next().value?.user
+    const ownerId = this._members.values().next().value?.user.id
+
+    if (ownerId === undefined) {
+      this._owner = undefined
+
+      // TODO: Emitter should somehow handle the no arguments events to not require passing arguments
+      return this.emit('is-empty', { payload: true })
+    }
+
+    this.owner = ownerId
   }
 
-  changeOwner(user: T['member']['user']): void {
-    if (!this.hasUser(user.id)) throw new Error('User is not a Lobby Member')
-
-    this.#owner = user
+  changeOwner(userId: TData['member']['user']['id']): void {
+    this.owner = userId
   }
 
-  add(user: T['member']['user']): void {
+  add(user: TData['member']['user']): void {
     if (this.hasUser(user.id)) throw new Error('User already in a lobby')
     if (this.isFull) throw new Error('Lobby is full')
 
-    this._members.set(user.id, this.createMember(user))
+    this.members.set(user.id, this.createMember(user))
   }
 
-  hasUser(userId: T['member']['user']['id']): boolean {
-    return this._members.has(userId)
-  }
-  get state(): TState {
-    return Object.freeze(this.#createState(this))
+  hasUser(userId: TData['member']['user']['id']): boolean {
+    return this.members.has(userId)
   }
 
+  open(): void {
+    this._status = 'open'
+  }
+
+  // ------- Getters -----------\
   get membersSize(): number {
     return this._members.size
   }
 
-  changeUserStatus(
-    userId: T['member']['user']['id'],
-    status: T['member']['status']
-  ): void {
-    const member = this._members.get(userId)
-
-    if (member === undefined) throw new Error(`User is not a lobby member`)
-    member.status = status
-  }
-
-  open(): void {
-    this.#status = 'open'
-  }
-
-  // ------- Getters -----------
   get maxMembers(): number {
-    return this.#maxMembers
+    return this._maxMembers
   }
 
-  get id(): T['id'] {
-    return this.#id
+  get id(): TData['id'] {
+    return this._id
   }
 
-  get ownerId(): T['member']['user']['id'] | undefined {
-    return this.#owner?.id
+  get ownerId(): TData['member']['user']['id'] | undefined {
+    return this._owner?.id
   }
 
-  private set owner(newOwner: T['member']['user'] | undefined) {
-    this.#owner = newOwner
+  protected set owner(newOwnerId: TData['member']['user']['id']) {
+    if (newOwnerId === this.owner?.id) return
+
+    const newOwner = this._members.get(newOwnerId)
+    if (newOwner === undefined) throw new Error('User is not a Lobby Member')
+
+    const prevOwner = this._owner
+
+    this._owner = newOwner
+    this.emit('changed-owner', { payload: { prevOwner } })
   }
 
-  get owner(): T['member']['user'] | undefined {
-    return this.#owner
+  get owner(): TData['member']['user'] | undefined {
+    return this._owner
   }
 
-  get status(): T['status'] {
-    return this.#status
+  get status(): TData['status'] {
+    return this._status
   }
 
-  set status(newStatus: T['status']) {
-    this.#status = newStatus
+  protected set status(newStatus: TData['status']) {
+    if (this.status === newStatus) return
+
+    const prevStatus = this.status
+    this._status = newStatus
+    this.emit('status-changed', {
+      payload: { prevStatus, currStatus: this.status },
+    })
   }
 
   get isFull(): boolean {
@@ -146,3 +210,4 @@ class Lobby<T extends LobbyBaseTypes, TState> implements Config.Statefull<
 }
 
 export { Lobby }
+export type { LobbyCtx, MemberCtx }

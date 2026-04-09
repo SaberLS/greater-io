@@ -1,54 +1,19 @@
-import { BaseGameEnigne, type BaseGameEnigneTypes } from '../BaseGameEngine'
-import type { IGameEngine } from '../IGameEngine'
+import { BaseGameEnigne } from '../BaseGameEngine/BaseGameEngine'
+import { ProblemGenerator } from '../BaseGameEngine/ProblemGenerator'
+import { SolutionReviewer } from '../BaseGameEngine/SolutionReviewer'
+import type { BaseGameEnigneTypes, Problem } from '../BaseGameEngine/types'
 
-interface MathQuestion {
+interface MathQuestion extends Problem {
   task: string
   solution: string
 }
 
 interface SimpleMathEngineTypes extends BaseGameEnigneTypes {
-  question: MathQuestion
+  problem: MathQuestion
 }
 
-class SimpleMathEngine
-  extends BaseGameEnigne<SimpleMathEngineTypes>
-  implements IGameEngine<SimpleMathEngineTypes>
-{
-  // ?TODO: This propably may be converted into generator function
-  private answeredAllQuestions(
-    answers: SimpleMathEngineTypes['answer_score'][],
-    questions: MathQuestion[]
-  ): boolean {
-    return answers.length === questions.length
-  }
-
-  private areCorrect(
-    answers: SimpleMathEngineTypes['answer_score'][]
-  ): boolean {
-    for (const answer of answers) if (!answer.correct) return false
-
-    return true
-  }
-
-  isFinished(
-    scores: SimpleMathEngineTypes['score'][],
-    questions: MathQuestion[]
-  ): boolean {
-    // if any scores consists all correct answers return true
-    for (const score of scores) {
-      const answers = Object.values(score)
-
-      if (
-        this.answeredAllQuestions(answers, questions) &&
-        this.areCorrect(answers)
-      )
-        return true
-    }
-
-    return false
-  }
-
-  private singleQuestion(): SimpleMathEngineTypes['question'] {
+const questionGenerator = new ProblemGenerator<SimpleMathEngineTypes>(
+  function (): SimpleMathEngineTypes['problem'] {
     const operators = ['+', '-', '*'] as const
     const operator = operators[Math.floor(Math.random() * operators.length)]
 
@@ -77,13 +42,13 @@ class SimpleMathEngine
       solution: result.toString(),
     }
   }
+)
 
-  generateQuestion(amount = 1): SimpleMathEngineTypes['question'][] {
-    const questions = [] as SimpleMathEngineTypes['question'][]
+const questionReviewer = new SolutionReviewer<SimpleMathEngineTypes>()
 
-    while (questions.length < amount) questions.push(this.singleQuestion())
-
-    return questions
+class SimpleMathEngine extends BaseGameEnigne<SimpleMathEngineTypes> {
+  constructor() {
+    super(questionGenerator, questionReviewer)
   }
 }
 

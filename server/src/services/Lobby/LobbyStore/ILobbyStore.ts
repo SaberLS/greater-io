@@ -1,6 +1,9 @@
-import type { ILobby, LobbyBaseTypes } from '../Lobby/ILobby'
+import type { Config } from '../types'
 
-interface ILobbyStore<T extends LobbyBaseTypes, TLobby extends ILobby<T>> {
+interface ILobbyStore<
+  T extends Config.LobbyTypes,
+  TLobby extends Config.BASE.LobbyInstance<T>,
+> {
   deleteUserById(userId: T['member']['user']['id']): void
   deleteLobbyById(lobbyId: T['id']): void
 

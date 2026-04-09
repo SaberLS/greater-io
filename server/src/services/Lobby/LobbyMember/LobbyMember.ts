@@ -1,39 +1,49 @@
+import { EventSource, type SourceOfEvents } from '../../../utils'
 import type { Config } from '../types'
-import type { ILobbyMember } from './ILobbyMember'
 
 class LobbyMember<
-  T extends Config.MemberTypes,
-  TState,
-> implements Config.Statefull<ILobbyMember<T>, TState> {
-  #user: T['user']
-  #status: T['status']
+  T extends Config.BASE.MemberTypes,
+  TEvents extends Config.BASE.MemberEvents<T>,
+  Target extends SourceOfEvents<Config.BASE.MemberInstance<T>, TEvents> =
+    SourceOfEvents<Config.BASE.MemberInstance<T>, TEvents>,
+>
+  extends EventSource<Config.BASE.MemberEvents<T> & TEvents, Target>
+  implements Config.BASE.MemberInstance<T>
+{
+  protected _user: T['user']
+  protected _status: T['status']
 
-  #createState: (t: LobbyMember<T, TState>) => TState
+  constructor(user: T['user'], status: T['status']) {
+    super()
 
-  constructor(
-    user: T['user'],
-    createState: (t: LobbyMember<T, TState>) => TState,
-    status: T['status']
-  ) {
-    this.#user = user
-    this.#status = status
-    this.#createState = createState
+    this._user = user
+    this._status = status
+  }
+
+  get id(): T['user']['id'] {
+    return this.user.id
   }
 
   get user(): T['user'] {
-    return this.#user
-  }
-
-  get state(): Readonly<TState> {
-    return Object.freeze(this.#createState(this))
+    return this._user
   }
 
   get status(): T['status'] {
-    return this.#status
+    return this._status
   }
 
   set status(status: T['status']) {
-    this.#status = status
+    if (this.status === status) return
+
+    const prevStatus = this._status
+    this._status = status
+
+    this.emit('status-changed', {
+      payload: {
+        currStatus: status,
+        prevStatus,
+      },
+    })
   }
 
   get isReady(): boolean {

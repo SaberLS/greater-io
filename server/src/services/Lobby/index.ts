@@ -1,5 +1,5 @@
-export * from './ILobbyManager'
 export * from './Lobby'
+export * from './LobbyManager'
 export * from './LobbyMember'
 export * from './LobbyStore'
 export * from './types'

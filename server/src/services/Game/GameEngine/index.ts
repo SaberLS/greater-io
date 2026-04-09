@@ -1,3 +1,2 @@
-export * from './BaseGameEngine'
-export * from './IGameEngine'
+export * from './BaseGameEngine/BaseGameEngine'
 export * from './SimpleMathEngine/SimpleMathEngine'

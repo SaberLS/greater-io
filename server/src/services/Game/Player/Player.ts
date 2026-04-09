@@ -1,46 +1,56 @@
-import type * as Lobby from '../../Lobby'
+import { EventSource, type SourceOfEvents } from '../../../utils'
 import type { Config } from '../types'
-import type { BASE } from '../types/config'
-import type { IPlayer } from './IPlayer'
 
 class Player<
-  T extends Config.PlayerTypes & { score: BASE.Score },
-  TState,
-> implements Lobby.Config.Statefull<IPlayer<T>, TState> {
-  score: T['score']
-  user: T['user']
-  status: T['status']
-  #createState: (t: Player<T, TState>) => TState
+  T extends Config.PlayerTypes,
+  TEvents extends Config.PlayerEvents<T>,
+  TMemberInstance extends Config.GameMemberInstance<T['member']>,
+  Target extends SourceOfEvents<
+    Config.PlayerInstance<T, TMemberInstance>,
+    TEvents
+  > = SourceOfEvents<Config.PlayerInstance<T, TMemberInstance>, TEvents>,
+>
+  extends EventSource<TEvents & Config.PlayerEvents<T>, Target>
+  implements Config.PlayerInstance<T, TMemberInstance>
+{
+  protected _score: T['score'] = {}
+  protected _status: T['status']
+  protected _member: TMemberInstance
 
-  constructor(
-    user: T['user'],
-    score: T['score'],
-    status: T['status'],
+  constructor(status: T['status'], member: TMemberInstance) {
+    super()
+    this._status = status
+    this._member = member
+  }
 
-    createState: (t: Player<T, TState>) => TState
-  ) {
-    this.score = score
-    this.user = user
-    this.status = status
+  get score(): T['score'] {
+    return this._score
+  }
 
-    this.#createState = createState
+  get status(): T['status'] {
+    return this._status
+  }
+
+  get id(): TMemberInstance['id'] {
+    return this.member.id
+  }
+
+  get member(): TMemberInstance {
+    return this._member
   }
 
   leave(): void {
-    this.status = 'left'
+    this._status = 'left'
   }
 
   quit(): void {
-    this.status = 'quit'
-  }
-
-  get state(): TState {
-    return Object.freeze(this.#createState(this))
+    this._status = 'quit'
   }
 
   get isReady(): boolean {
     return this.status === 'ready'
   }
+
   get isPlaying(): boolean {
     return this.status === 'in-game'
   }

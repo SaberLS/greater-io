@@ -32,7 +32,7 @@ type LobbyMember = Config.Statefull<
 type GameEngineTypes = Game.BaseGameEnigneTypes
 
 type PlayerTypes = Game.Config.PlayerTypes<LobbyUser> & {
-  score: GameEngineTypes['score']
+  score: GameEngineTypes['total_score']
 }
 interface PlayerState {
   user: {

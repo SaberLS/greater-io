@@ -1,131 +1,145 @@
 import ms from 'ms'
-import { Emitter } from '../../../utils'
-import type * as Lobby from '../../Lobby'
-import type { Statefull } from '../../Lobby/types/config'
+import { EventSource, type SourceOfCtx } from '../../../utils'
 import type { Config } from '../types'
-import type { GameEvents, IGameInstance } from './IGameInstance'
 
 class GameInstance<
-  T extends Config.GameTypes<Config.PlayerTypes<Lobby.ILobbyUser>>,
-  TState extends object,
-> implements Statefull<IGameInstance<T>, TState> {
-  id: number
-  players: Map<T['player']['user']['id'], T['player_instance']>
-  engine: T['engine_instance']
-  questions: T['engine']['question'][]
-  createState: (t: GameInstance<T, TState>) => TState
-  #status: T['status']
-  #startTimeout: ReturnType<typeof setTimeout> | undefined
-  #startAt: number | undefined
-  #endAt: number | undefined
-  #endTimeout: ReturnType<typeof setTimeout> | undefined
+  TData extends Config.GameTypes<Config.PlayerTypes>,
+  TGameMemberCtx extends Config.GameMemberCtx<TData['player']['member']>,
+  TPlayerCtx extends Config.PlayerCtx<TData['player'], TGameMemberCtx>,
+  TGameCtx extends Config.GameCtx<TData, TGameMemberCtx, TPlayerCtx>,
+>
+  extends EventSource<
+    Config.GameEvents<TData> & TGameCtx['events'],
+    SourceOfCtx<TGameCtx>
+  >
+  implements
+    Config.GameInstance<
+      TData,
+      SourceOfCtx<TGameMemberCtx>,
+      SourceOfCtx<TPlayerCtx>
+    >
+{
+  id: TData['id']
+  players: Map<SourceOfCtx<TPlayerCtx>['id'], SourceOfCtx<TPlayerCtx>>
+  engine: Config.GameEngineInstance<TData['engine']>
+  problems: TData['engine']['problem'][]
 
-  #Emitter = new Emitter<GameEvents<T>>()
-
-  get event(): Emitter<GameEvents<T>> {
-    return this.#Emitter
-  }
+  _status: TData['status']
+  _startTimeout: ReturnType<typeof setTimeout> | undefined
+  _startAt: number | undefined
+  _endAt: number | undefined
+  _endTimeout: ReturnType<typeof setTimeout> | undefined
 
   constructor(
-    id: number,
-    users: T['player']['user'][],
-    engine: T['engine_instance'],
-    createPlayer: (user: T['player']['user']) => T['player_instance'],
-    createState: (t: GameInstance<T, TState>) => TState
+    id: TData['id'],
+    members: SourceOfCtx<TGameMemberCtx>[],
+    engine: Config.GameEngineInstance<TData['engine']>,
+    createPlayer: (
+      member: SourceOfCtx<TGameMemberCtx>
+    ) => SourceOfCtx<TPlayerCtx>
   ) {
-    this.createState = createState
-    this.#status = 'preparing'
+    super()
+    this._status = 'preparing'
 
     this.id = id
     this.engine = engine
 
     this.players = new Map(
-      users.map((user): [T['player']['user']['id'], T['player_instance']] => [
-        user.id,
-        createPlayer(user),
-      ])
+      members.map(
+        (
+          member
+        ): [SourceOfCtx<TGameMemberCtx>['id'], SourceOfCtx<TPlayerCtx>] => [
+          member.id,
+          createPlayer(member),
+        ]
+      )
     )
 
-    this.questions = this.engine.generateQuestion(10)
-    this.#status = 'prepared'
-  }
-
-  get state(): TState {
-    return Object.freeze(this.createState(this))
+    this.problems = [...this.engine.problemGenerator.generateProblem(10)]
+    this._status = 'prepared'
   }
 
   scheduleStart(delayMs: number): void {
     if (this.isScheduled) throw new Error('Game already scheduled')
     if (!this.isPrepared || !this.isReady) throw new Error("Game can't start")
 
-    this.#status = 'scheduled'
-    this.#startAt = Date.now() + delayMs
+    this._status = 'scheduled'
+    this._startAt = Date.now() + delayMs
 
-    this.#startTimeout = setTimeout((): void => {
+    this._startTimeout = setTimeout((): void => {
       this.startNow()
     }, delayMs)
 
-    this.event.emit('scheduled', { startAt: this.#startAt })
+    this.emit('scheduled', { payload: { startAt: this._startAt } })
   }
 
   get isScheduled(): boolean {
-    return this.#status === 'scheduled'
+    return this._status === 'scheduled'
   }
 
   private startNow(): void {
-    this.#status = 'in-progress'
+    this._status = 'in-progress'
     for (const player of this.players.values())
       if (player.isReady) player.status = 'in-game'
 
-    this.#endAt = Date.now() + ms('5m')
+    this._endAt = Date.now() + ms('5m')
 
-    this.#endTimeout = setTimeout((): void => this.end(), ms('5m'))
+    this._endTimeout = setTimeout((): void => this.end(), ms('5m'))
 
-    this.event.emit('started')
+    this.emit('started', { payload: undefined })
   }
 
   private clearTimeouts(): void {
-    clearTimeout(this.#startTimeout)
-    clearTimeout(this.#endTimeout)
+    clearTimeout(this._startTimeout)
+    clearTimeout(this._endTimeout)
 
-    this.#startTimeout = undefined
-    this.#endTimeout = undefined
+    this._startTimeout = undefined
+    this._endTimeout = undefined
   }
 
   end(): void {
     if (this.hasEnded) return
 
     this.clearTimeouts()
-    this.#status = 'finished'
-    this.event.emit('ended')
+    this._status = 'finished'
+
+    this.emit('ended', { payload: undefined })
   }
 
-  submitAnswer(
-    playerId: T['player']['user']['id'],
+  submitSolution(
+    playerId: SourceOfCtx<TPlayerCtx>['id'],
     questionIndex: number,
-    answer: T['engine']['answer'],
-    context: T['engine']['context']
-  ): T['engine']['answer_score'] {
+    solution: TData['engine']['solution'],
+    context: TData['engine']['context']
+  ): TData['engine']['partial_score'] {
     if (!this.isInProgress || this.hasEnded)
       throw new Error(`Answer can't be submitted, game is ${this.status}`)
 
     const player = this.players.get(playerId)
     if (!player) throw new Error(`Player is not available`)
 
-    const question = this.questions[questionIndex]
+    const question = this.problems[questionIndex]
     if (!question) throw new Error(`Question is not available`)
 
-    const answerScore = this.engine.rateAnswer(question, answer, context)
-    this.engine.reduceScore(questionIndex, player.score, answerScore)
+    const answerScore = this.engine.solutionReviewer.rateSolution(
+      question,
+      solution,
+      context
+    )
+    this.engine.solutionReviewer.reduceScore(
+      questionIndex,
+      player.score,
+      answerScore
+    )
 
-    this.event.emit('answer', { playerId, score: answerScore })
+    this.emit('answer', { payload: { playerId, score: answerScore } })
 
-    if (this.engine.isFinished(this.scores, this.questions)) this.end()
+    // if (this.engine.isFinished(this.scores, this.problems)) this.end()
 
     return answerScore
   }
 
-  get scores(): T['player_instance']['score'][] {
+  get scores(): TData['player']['score'][] {
     const result = []
     for (const player of this.players.values()) result.push(player.score)
 
@@ -134,25 +148,26 @@ class GameInstance<
 
   cancel(reason: string): void {
     this.clearTimeouts()
-    this.#status = 'canceled'
-    this.event.emit('cancel', { reason })
+    this._status = 'canceled'
+    this.emit('cancel', { payload: { reason } })
   }
 
-  get leaderboard(): T['player_instance'][] {
+  get leaderboard(): SourceOfCtx<TPlayerCtx>[] {
     return [...this.players.values()].sort(
-      (l, r): number => -this.engine.compareScores(l.score, r.score)
+      (l, r): number =>
+        -this.engine.solutionReviewer.compareScores(l.score, r.score)
     )
   }
 
   get startAt(): number | undefined {
-    return this.#startAt
+    return this._startAt
   }
   get endAt(): number | undefined {
-    return this.#endAt
+    return this._endAt
   }
 
-  get status(): T['status'] {
-    return this.#status
+  get status(): TData['status'] {
+    return this._status
   }
 
   get isReady(): boolean {
