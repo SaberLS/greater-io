@@ -7,7 +7,7 @@ try {
     outdir: 'dist',
     bundle: true,
     format: 'esm',
-    platform: 'neutral',
+    platform: 'node',
     sourcemap: true,
     splitting: false,
     minify: false,
