@@ -1,0 +1,35 @@
+{
+  "name": "@greater-io/packages/typed-map",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "prebuild": "pnpm clean",
+    "build": "node esbuild.config.js && tsc -p tsconfig.json",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "clean:all": "rimraf dist tsconfig.tsbuildinfo node_modules",
+    "clean:restart": "pnpm clean:all && pnpm --filter shared install",
+    "test": "jest --config __tests__/jest.config.ts"
+  },
+  "devDependencies": {
+    "@greater-io/tools": "workspace:^",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.10.4",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.25.12",
+    "esbuild-node-externals": "^1.20.1",
+    "jest": "^30.0.2"
+  }
+}

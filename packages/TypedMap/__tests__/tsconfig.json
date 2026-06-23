@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "types": ["node", "jest"],
+    "rootDir": "../"
+  },
+  "exclude": ["../node_modules", "../dist"],
+  "extends": "../tsconfig.json",
+  "include": ["./jest.config.ts", "../src", "./"]
+}
