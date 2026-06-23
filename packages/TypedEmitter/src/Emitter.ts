@@ -1,4 +1,4 @@
-import { TypedMap } from '../../TypedMap/src'
+import { TypedMap } from '@greater-io/packages/typed-map'
 import type { EmitArgs, EventMap, Handler, TypedEmitter } from './types'
 
 class Emitter<TEvents extends EventMap> implements TypedEmitter<TEvents> {
