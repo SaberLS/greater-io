@@ -1,2 +1,2 @@
-export * from './ITypedMap'
 export * from './TypedMap'
+export * from './types/ITypedMap'

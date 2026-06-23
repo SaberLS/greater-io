@@ -1,9 +1,5 @@
-import type {
-  ITypedMap,
-  TypedEntries,
-  TypedMapData,
-  TypedMapValues,
-} from './ITypedMap'
+import type { TypedEntries, TypedMapData, TypedMapValues } from './types'
+import type { ITypedMap } from './types/ITypedMap'
 
 class TypedMap<TMap extends TypedMapData> implements ITypedMap<TMap> {
   #map: Map<keyof TMap, TypedMapValues<TMap>>

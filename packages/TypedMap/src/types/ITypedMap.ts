@@ -1,13 +1,15 @@
-type TypedMapData = Record<keyof object, never>
-type TypedMapKeys<TMap extends TypedMapData> = keyof TMap
-type TypedMapValues<TMap extends TypedMapData> = TMap[TypedMapKeys<TMap>]
+import type { IKeyValueStore } from '@greater-io/packages/key-value-store'
+import type {
+  TypedEntries,
+  TypedMapData,
+  TypedMapKeys,
+  TypedMapValue,
+  TypedMapValues,
+} from './util'
 
-type TypedMapValue<
+interface ITypedMap<
   TMap extends TypedMapData,
-  K extends TypedMapKeys<TMap>,
-> = TMap[K]
-
-interface ITypedMap<TMap extends TypedMapData> {
+> extends IKeyValueStore<TypedMapData> {
   get<K extends TypedMapKeys<TMap>>(key: K): TypedMapValue<TMap, K>
   set<K extends TypedMapKeys<TMap>>(key: K, value: TypedMapValue<TMap, K>): this
   toObject(): TMap
@@ -25,15 +27,4 @@ interface ITypedMap<TMap extends TypedMapData> {
   values(): IterableIterator<TMap[keyof TMap]>
 }
 
-type TypedEntries<T> = {
-  [K in keyof T]: [K, T[K]]
-}[keyof T]
-
-export type {
-  ITypedMap,
-  TypedEntries,
-  TypedMapData,
-  TypedMapKeys,
-  TypedMapValue,
-  TypedMapValues,
-}
+export type { ITypedMap }

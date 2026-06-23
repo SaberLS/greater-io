@@ -23,6 +23,7 @@
     "test": "jest --config __tests__/jest.config.ts"
   },
   "devDependencies": {
+    "@greater-io/packages/key-value-store": "workspace:^",
     "@greater-io/tools": "workspace:^",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.4",
