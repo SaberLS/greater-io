@@ -26,6 +26,7 @@
     "@greater-io/tools": "workspace:^",
     "@types/node": "^24.10.4",
     "esbuild": "^0.25.12",
-    "esbuild-node-externals": "^1.20.1"
+    "esbuild-node-externals": "^1.20.1",
+    "rimraf": "^6.1.2"
   }
 }
