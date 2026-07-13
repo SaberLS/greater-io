@@ -5,6 +5,7 @@ abstract class Operatable<
   TOperations extends OperationMap,
 > implements IOperatable<TOperations> {
   protected abstract _operations: OperationSet<this, TOperations>
+  protected abstract _operationKeys: Set<keyof TOperations>
 
   dispatch<TOperation extends keyof TOperations>(
     key: TOperation,
@@ -15,8 +16,8 @@ abstract class Operatable<
     return this._operations[key].execute(this, argument)
   }
 
-  get operations(): readonly (keyof TOperations)[] {
-    return Object.keys(this._operations) as (keyof TOperations)[]
+  get operations(): ReadonlySet<keyof TOperations> {
+    return this._operationKeys
   }
 }
 

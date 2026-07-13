@@ -20,7 +20,8 @@ describe('Operatable', () => {
       protected readonly _operations: OperationSet<
         Operatable<TestOperations>,
         TestOperations
-      >
+      >,
+      protected readonly _operationKeys: Set<keyof TestOperations>
     ) {
       super()
     }
@@ -37,6 +38,7 @@ describe('Operatable', () => {
   >
 
   let operatable: TestOperatable
+  let operationsKeys: string[]
 
   beforeEach(() => {
     addOperation = {
@@ -49,10 +51,12 @@ describe('Operatable', () => {
       executeSafe: jest.fn(),
     }
 
-    operatable = new TestOperatable({
+    const operations = {
       add: addOperation,
       multiply: multiplyOperation,
-    })
+    }
+    operationsKeys = Object.keys(operations)
+    operatable = new TestOperatable(operations, new Set(operationsKeys))
   })
 
   it('dispatches the correct operation', () => {
@@ -89,14 +93,12 @@ describe('Operatable', () => {
   })
 
   it('returns all registered operations', () => {
-    expect(operatable.operations).toEqual(['add', 'multiply'])
+    expect(operatable.operations).toEqual(new Set(['add', 'multiply']))
   })
 
   it('operations getter is readonly', () => {
     const operations = operatable.operations
 
-    expect(operations).toEqual(['add', 'multiply'])
-
-    expect(Array.isArray(operations)).toBe(true)
+    expect(operations).toEqual(new Set(['add', 'multiply']))
   })
 })

@@ -6,7 +6,7 @@ interface IOperatable<TOperations extends OperationMap> {
     argument: TOperations[TKey]['argument']
   ): TOperations[TKey]['result']
 
-  get operations(): readonly (keyof TOperations)[]
+  get operations(): ReadonlySet<keyof TOperations>
 }
 
 export type { IOperatable }
