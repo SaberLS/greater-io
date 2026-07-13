@@ -2,6 +2,9 @@ interface EventObject {
   readonly payload: object
 }
 
-type EventMap = Record<keyof object, EventObject | undefined>
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+interface EventMap {
+  readonly [event: string]: EventObject | undefined
+}
 
 export type { EventMap, EventObject }
