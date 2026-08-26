@@ -23,6 +23,10 @@ const createConfig = (__dirname: string): Config => {
           },
         },
         rules: {
+          '@typescript-eslint/consistent-indexed-object-style': [
+            'warn',
+            'index-signature',
+          ],
           '@typescript-eslint/explicit-function-return-type': [
             'warn',
             {
